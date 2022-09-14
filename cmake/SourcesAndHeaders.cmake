@@ -9,6 +9,7 @@ set(exe_sources
 
 set(headers
     include/tree/nodes.hpp
+    include/tree/nodeFactory.hpp
 )
 
 set(test_sources
