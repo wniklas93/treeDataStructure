@@ -41,7 +41,7 @@ jobs:
         cd ..
         git clone https://github.com/boost-ext/ut.git
         cmake -Bbuild -H. ./ut
-        cd build && make -j8 install
+        cd build && sudo make -j8 install
       env:
         CC:   gcc-10
         CXX:  g++-10
