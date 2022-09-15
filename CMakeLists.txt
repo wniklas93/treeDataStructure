@@ -39,6 +39,7 @@ if(PROJECT_SOURCE_DIR STREQUAL PROJECT_BINARY_DIR)
   message(FATAL_ERROR "In-source builds not allowed. Please make a new directory (called a build directory) and run CMake from there.\n")
 endif()
 
+
 #
 # Create library, setup header and source files
 #
@@ -73,6 +74,12 @@ set_target_properties(
 message(STATUS "Added all header and source files.\n")
 
 #
+# Model project dependencies (Libraries)
+#
+
+# no external dependencies exist
+
+#
 # Add library to project
 #
 
@@ -93,6 +100,12 @@ message(STATUS "Added library ${PROJECT_NAME}")
 #
 # Unit testing setup
 #
+
+if(${PROJECT_NAME}_ENABLE_UNIT_TESTING)
+  enable_testing()
+  message(STATUS "Build unit tests for the project. Tests should always be found in the `test` folder\n")
+  add_subdirectory(test)
+endif()
 
 
 #

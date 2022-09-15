@@ -13,7 +13,7 @@ set(headers
 )
 
 set(test_sources
-#  src/tmp_test.cpp
+  src/read.cpp
 )
 
 set(experiments_sources

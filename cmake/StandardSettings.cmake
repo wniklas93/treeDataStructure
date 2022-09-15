@@ -15,7 +15,7 @@ option(${PROJECT_NAME}_ENABLE_EXPERIMENTS "Enable experiments for the project (f
 # Unit testing
 #
 
-#Todo: Units test are still missing
+option(${PROJECT_NAME}_ENABLE_UNIT_TESTING "Enable unit tests for the projects (from the `test` subfolder)." ON)
 
 #
 # Miscellanious options
