@@ -18,6 +18,12 @@ option(${PROJECT_NAME}_ENABLE_EXPERIMENTS "Enable experiments for the project (f
 option(${PROJECT_NAME}_ENABLE_UNIT_TESTING "Enable unit tests for the projects (from the `test` subfolder)." ON)
 
 #
+# Benchmarking
+#
+
+option(${PROJECT_NAME}_ENABLE_BENCHMARKING "Enable unit tests for the projects (from the `test` subfolder)." ON)
+
+#
 # Miscellanious options
 #
 

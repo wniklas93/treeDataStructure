@@ -19,3 +19,7 @@ set(test_sources
 set(experiments_sources
   src/tree.cpp
   )
+
+set(benchmark_sources
+  src/memory.cpp
+  )
