@@ -102,7 +102,7 @@ using XYZArray_v = std::array<std::array<std::array<std::variant<int,double, flo
 int main (){
     
     std::ofstream gnuscript;
-    gnuscript.open("benchmark/memory.gnu");
+    gnuscript.open("experiments/memory_footprint.gnu");
 
     // Benchmark homogeneous tree data structure
     size_t allocatedTree_h = 0;
@@ -145,7 +145,7 @@ int main (){
     gnuscript << "set boxwidth 0.5 \n";
     gnuscript << "set style fill solid \n";
     gnuscript << "set terminal png \n";
-    gnuscript << "set output \"benchmark/memory.png\" \n";
+    gnuscript << "set output \"experiments/memory_footprint.png\" \n";
     gnuscript << "plot $data every 2::0:0 using  1:2 with boxes ls 1 t \"Array Data Structure\",\\" << "\n";
     gnuscript << "$data every 2::1:0 using 1:2 with boxes ls 2 t \"Tree Data Structure\" \n";
     gnuscript.close();

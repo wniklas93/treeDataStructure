@@ -116,11 +116,3 @@ if(${PROJECT_NAME}_ENABLE_EXPERIMENTS)
   add_subdirectory(experiments)
 endif()
 
-#
-# Benchmarking setup
-#
-
-if(${PROJECT_NAME}_ENABLE_BENCHMARKING)
-  message(STATUS "Build benchmarks for the project. Benchmarks should always be found in the `benchmark` folder\n")
-  add_subdirectory(benchmark)
-endif()
