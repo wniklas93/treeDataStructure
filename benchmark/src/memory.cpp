@@ -5,12 +5,11 @@
 #include <string>
 #include <variant>
 
+#include <iostream>
+#include <fstream>
+
 #include "tree/nodes.hpp"
 #include "tree/nodeFactory.hpp"
-#include "matplotlibcpp.hpp"
-
-namespace plt = matplotlibcpp;
-
 
 // Function to track memory consumption of objects
 void* operator new(std::size_t sz, std::size_t& allocated){
@@ -102,7 +101,10 @@ using XYZArray_v = std::array<std::array<std::array<std::variant<int,double, flo
 
 int main (){
     
-    // Benchmark homogenous tree data structure
+    std::ofstream gnuscript;
+    gnuscript.open("benchmark/memory.gnu");
+
+    // Benchmark homogeneous tree data structure
     size_t allocatedTree_h = 0;
     XYZTree_h* th = new(allocatedTree_h) XYZTree_h;
 
@@ -122,38 +124,31 @@ int main (){
 
     std::cout << allocatedArray_v << std::endl;
 
-    // Plot results
-    // Set the size of output image to 1200x780 pixels
-    plt::figure_size(1200, 780);
+    // Visualize object memory footprint via gnuplot script
+    gnuscript << "$data << EOD \n";
+    gnuscript << "2.75 " <<  allocatedArray_h << "\n";
+    gnuscript << "3.25 " <<  allocatedTree_h  << "\n";
+    gnuscript << "\n";
+    gnuscript << "6.75 " << allocatedArray_v  << "\n";
+    gnuscript << "7.25 " << allocatedTree_v   << "\n";
+    gnuscript << "EOD \n";
 
-    plt::bar(std::vector<std::size_t>{0},
-    std::vector<std::size_t>{allocatedTree_h},
-    "lightyellow",
-    "-",
-    0.2,
-    std::map<std::string, std::string>{{"color", "steelblue"}});
+    gnuscript << "set title \"Object size in bytes\" \n";
+    gnuscript << "set xrange [0:10] \n";
+    gnuscript << "set yrange [0:500] \n";
+    gnuscript << "set ylabel \"Bytes\" \n";
+    gnuscript << "unset xtics \n";
+    gnuscript << "set xtics format \" \" \n";
+    gnuscript << "set xtics (\"Homogeneous \\n (27 integers)\" 3, \"Heterogeneous \\n (18 integers, 9 floats)\" 7) \n";
 
-    plt::bar(std::vector<std::size_t>{1},
-    std::vector<std::size_t>{allocatedArray_h},
-    "black",
-    "-",
-    0.2,
-    std::map<std::string, std::string>{{"color", "mediumseagreen"}});
 
-    plt::bar(std::vector<std::size_t>{2},
-    std::vector<std::size_t>{allocatedTree_v},
-    "black",
-    "-",
-    0.2,
-    std::map<std::string, std::string>{{"color", "royalblue"}});
+    gnuscript << "set boxwidth 0.5 \n";
+    gnuscript << "set style fill solid \n";
+    gnuscript << "set terminal png \n";
+    gnuscript << "set output \"memory.png\" \n";
+    gnuscript << "plot $data every 2::0:0 using  1:2 with boxes ls 1 t \"Array Data Structure\",\\" << "\n";
+    gnuscript << "$data every 2::1:0 using 1:2 with boxes ls 2 t \"Tree Data Structure\" \n";
+    gnuscript.close();
 
-    plt::bar(std::vector<std::size_t>{3},
-    std::vector<std::size_t>{allocatedArray_v},
-    "black",
-    "-",
-    0.2,
-    std::map<std::string, std::string>{{"color", "mediumpurple"}});
-    plt::show();
-    plt::legend();
     return 0;
 }

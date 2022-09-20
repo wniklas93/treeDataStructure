@@ -30,13 +30,8 @@ foreach(file ${benchmark_sources})
   #
   # Add external libraries (Model project dependencies)
   #
-  add_subdirectory(extern)
 
-  target_link_libraries(
-    ${benchmark_name}_Benchmark
-    PUBLIC
-    Matplotlib
-  )
+  # Currently no external libraries in use
   
   #
   # Link the executeable to the used library
