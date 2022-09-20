@@ -35,6 +35,7 @@ foreach(file ${test_sources})
     ${test_name}_Tests
     PRIVATE
     Boost::ut
+    ${CMAKE_PROJECT_NAME}
   )
 
   #

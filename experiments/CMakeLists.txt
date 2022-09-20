@@ -26,6 +26,7 @@ foreach(file ${experiments_sources})
   # Link the executeable to the used library
   #
   target_link_libraries(${experiment_name} PRIVATE ${CMAKE_PROJECT_NAME})
+  
 endforeach()
 
 message("Finished adding experiments for ${CMAKE_PROJECT_NAME}.")

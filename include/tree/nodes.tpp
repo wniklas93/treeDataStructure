@@ -29,11 +29,12 @@ template<NodeHeader H, NodeLike... N>
 template<class T, class... Args>
 bool Node<H,N...>::read(auto& result, const uint8_t& ID, const Args&... residualIDs){
 
-    bool error;
+    bool error = true;
         
-    //Generic compile-time implementation of switch-case
     if constexpr (sizeof... (residualIDs) > 0)
     {
+        // Handle inner node
+
         initializer_list<bool> {
         N::Header::guard(ID) ? (error = get<id2idx<N::Header::ID>::getIndex()>(childs).template
          read<T>(result,residualIDs...),
@@ -44,6 +45,7 @@ bool Node<H,N...>::read(auto& result, const uint8_t& ID, const Args&... residual
         
     if constexpr(sizeof... (residualIDs) == 0)
     {
+        // Handle leafnode
         constexpr typename filter<T,N...>::type matchingLeafs;
 
         result = apply([&](auto... Match) {

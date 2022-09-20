@@ -62,7 +62,8 @@ struct Node{
     template<class T, class... Args>
     bool read(auto& result, const uint8_t& ID, const Args&... residualIDs);
 
-    // Type filter for parameter pack
+    //*************** Type filter for leafnodes ***************\\
+    // Tuple assembler
     template <typename, typename> struct Cons{};
 
     template <typename  T, typename ...Args>
@@ -71,6 +72,9 @@ struct Node{
         using type = tuple<T, Args...>;
     };
 
+
+    // Type filter filtering non matching types and returning tuple with
+    // matching
     template <typename DataType, typename...> struct filter{};
 
     template <typename DataType> struct filter<DataType> { using type = tuple<>; };
