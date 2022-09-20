@@ -133,7 +133,7 @@ int main (){
     gnuscript << "7.25 " << allocatedTree_v   << "\n";
     gnuscript << "EOD \n";
 
-    gnuscript << "set title \"Object size in bytes\" \n";
+    gnuscript << "set title \"Memory Footprint of Objects\" \n";
     gnuscript << "set xrange [0:10] \n";
     gnuscript << "set yrange [0:500] \n";
     gnuscript << "set ylabel \"Bytes\" \n";
@@ -145,7 +145,7 @@ int main (){
     gnuscript << "set boxwidth 0.5 \n";
     gnuscript << "set style fill solid \n";
     gnuscript << "set terminal png \n";
-    gnuscript << "set output \"memory.png\" \n";
+    gnuscript << "set output \"benchmark/memory.png\" \n";
     gnuscript << "plot $data every 2::0:0 using  1:2 with boxes ls 1 t \"Array Data Structure\",\\" << "\n";
     gnuscript << "$data every 2::1:0 using 1:2 with boxes ls 2 t \"Tree Data Structure\" \n";
     gnuscript.close();

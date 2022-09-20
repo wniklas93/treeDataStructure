@@ -21,5 +21,5 @@ set(experiments_sources
   )
 
 set(benchmark_sources
-  src/memory.cpp
+  src/memory_footprint.cpp
   )
