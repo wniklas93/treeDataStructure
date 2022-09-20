@@ -9,6 +9,7 @@ project(
   LANGUAGES CXX
 )
 
+enable_testing()
 
 message(STATUS "Adding tests under ${CMAKE_PROJECT_NAME}Tests...")
 message("Added Tests:")
