@@ -72,7 +72,7 @@ int main() {
   // Test asymetric tree (Tree with leafnodes in different layers)
   AsymetricTree t_asym;
   "read_exist_asym_tree"_test = [&] {
-    //expect(t_asym.read<double>(result_double,1) == 0_i);
+    expect(t_asym.read<double>(result_double,1) == 0_i);
   };
 
 }

@@ -28,19 +28,21 @@ concept LeafHeader = requires () {
     T::defaultValue;
 };
 
+
 template<class T>
-concept NodeLike = is_same_v<T, bool> ||
-                   is_same_v<T, string> ||
-                   is_same_v<T, uint8_t> ||
-                   is_same_v<T, uint16_t> ||
-                   requires (T t) {         
-                       t.childs;
-                       typename T::Header;
-                    } || 
-                   requires(T t) {
-                       t.data;
-                       typename T::Header;
-                   };
+concept LeafNodeConcept = requires (T t) {
+                            t.data;
+                            typename T::Header;
+};
+
+template<class T>
+concept NodeConcept = requires (T t){
+                            t.childs;
+                            typename T::Header;
+};
+
+template<class T>
+concept NodeLike = LeafNodeConcept<T> || NodeConcept<T>;
 
 template<LeafHeader H>
 struct LeafNode{
@@ -61,35 +63,15 @@ struct Node{
 
     template<class T, class... Args>
     bool read(auto& result, const uint8_t& ID, const Args&... residualIDs);
+    
+    template<class... Ts>
+    struct overloaded : Ts... {
+         using Ts::operator()...;
+     };
 
-    //*************** Type filter for leafnodes ***************\\
-    // Tuple assembler
-    template <typename, typename> struct Cons{};
-
-    template <typename  T, typename ...Args>
-    struct Cons<T, tuple<Args...>>
-    {
-        using type = tuple<T, Args...>;
-    };
-
-
-    // Type filter filtering non matching types and returning tuple with
-    // matching
-    template <typename DataType, typename...> struct filter{};
-
-    template <typename DataType> struct filter<DataType> { using type = tuple<>; };
-
-    template <typename DataType,
-              typename First,
-              typename ...Tail>
-    struct filter<DataType,First,Tail...>
-    {
-        using type = typename std::conditional<
-                                    is_same_v<DataType, typename First::Header::type>,
-                                    typename Cons<First, typename filter<DataType,Tail...>::type>::type,
-                                    typename filter<DataType,Tail...>::type
-                              >::type;
-    }; 
+    template<class... Ts>
+    overloaded(Ts...) -> overloaded<Ts...>; 
+    
 };
 
 // Include template implementation
