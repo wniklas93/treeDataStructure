@@ -62,7 +62,7 @@ struct Node{
     };
 
     template<class T, class... Args>
-    bool read(auto& result, const uint8_t& ID, const Args&... residualIDs);
+    bool read(T& result, const uint8_t& ID, const Args&... residualIDs);
     
     template<class... Ts>
     struct overloaded : Ts... {

@@ -29,48 +29,44 @@ constexpr uint8_t Node<H,N...>::id2idx<ID>::getIndex(){
 
 template<NodeHeader H, NodeLike... N>
 template<class T, class... Args>
-bool Node<H,N...>::read(auto& result, const uint8_t& ID, const Args&... residualIDs){
+bool Node<H,N...>::read(T& result, const uint8_t& ID, const Args&... residualIDs){
 
     bool error = true;
         
-    if constexpr (sizeof... (residualIDs) > 0)
-    {
-        // Handle inner node
-
-        initializer_list<bool> {
-        N::Header::guard(ID) ? (error = get<id2idx<N::Header::ID>::getIndex()>(childs).template
-         read<T>(result,residualIDs...),
-        false) : false... 
-        };
-    }
-
-        
-    if constexpr(sizeof... (residualIDs) == 0)
-    {
-
-        // Sequential filter:
-        // 1) Filter out inner nodes (Non-leafnodes)
-        // 2) Filter out leafnodes storing the wrong type
-        // 3) Filter out leafnodes with the wrong ID
-        auto filter = overloaded {
-            [&]<LeafNodeConcept L>(L l)
+    // Switch with read operation:
+    //  |
+    //  |-Leafnodes: 1) Filter out leafnodes with data types not matching to query data type   
+    //  |            2) Filter out leafnodes with ID not matching queried ID
+    //  |            3) Get data if matching leafnode was found
+    //  |
+    //  |-Node:      1) Filter out nodes with ID not matching queried ID
+    //               2) Immerse one layer deeper
+    
+    auto switcher = overloaded {
+        [&]<LeafNodeConcept L>(L l)
+            {
+                if constexpr ((is_same_v<typename L::Header::type,T>) && (sizeof... (residualIDs) == 0))
                 {
-                    if constexpr (is_same_v<typename L::Header::type,T>)
-                    {
-                       L::Header::guard(ID) ? (error=false, result = get<id2idx<L::Header::ID>::getIndex()>(childs).data,
-                       false) : false;
-                    }
-                },
-            [&]<NodeConcept K>(K k){},
-        };
+                   L::Header::guard(ID) ? (error=false, result = get<id2idx<L::Header::ID>::getIndex()>(childs).data,
+                   false) : false;
+                }
+            },
+        [&]<NodeConcept K>(K k){
+            if constexpr (sizeof... (residualIDs) > 0)
+            {
+                K::Header::guard(ID) ? (error = get<id2idx<K::Header::ID>::getIndex()>(childs).template
+                read<T>(result,residualIDs...),
+                false) : false;
+            }
+        },
+    };
 
-        // Apply filter
-        std::apply([&](const auto&... child){ (filter(child), ...);}, childs);
+    // Apply switch
+    std::apply([&](const auto&... child){ (switcher(child), ...);}, childs);
 
-    }
         
-        //return move(ret); does not work because Werror=pessimizing-move
-        return error;
+    //return move(ret); does not work because Werror=pessimizing-move
+    return error;
 }
 
 #endif

@@ -4,6 +4,8 @@
 #include "tree/nodes.hpp"
 #include "tree/nodeFactory.hpp"
 
+#include <string>
+
 // Definition of headers according to tree api
 struct RootHeader{
     static constexpr uint8_t ID = 0;
@@ -43,7 +45,7 @@ using SimpleTree = Node<
 using AsymetricTree = Node<
                         RootHeader,
                         SimpleTree,
-                        LeafNode<LeafHeaderImpl<1,5.5,double>>
+                        LeafNode<LeafHeaderImpl<1,2.5,double>>
                         >;
 
 
@@ -53,7 +55,8 @@ int main() {
   
   int             result_int;
   float           result_float;
-  double          result_double;
+  double          result_double0;
+  double          result_double1;
   array<char,255> result_string;
 
   // Test simple tree (Tree with one layer)
@@ -61,18 +64,46 @@ int main() {
 
 
   "read_exist_simple_tree"_test = [&] {
-    expect(t_simple.read<int>(result_int,0)                == 0_i);        // Must return no error (0), as leafnode does exist
-    expect(t_simple.read<double>(result_double,1)          == 0_i);        // ""
-    expect(t_simple.read<float>(result_float,2)            == 0_i);        // ""
-    expect(t_simple.read<array<char,255>>(result_string,3) == 0_i);        // ""
     expect(t_simple.read<float>(result_float,4)            == 1_i);        // Must return an error (1), as leafnode does not exist
     expect(t_simple.read<float>(result_float,-4)           == 1_i);        // Must return an error (1), as leafnode does not exist
+    expect(t_simple.read<float>(result_float,5)            == 1_i);        // Must return an error (1), as leafnode does not exist
+    expect(t_simple.read<int>(result_int,0)                == 0_i);        // Must return no error (0), as leafnode does exist
+    expect(t_simple.read<double>(result_double0,1)          == 0_i);       // Must return no error (0), as leafnode does exist
+    expect(t_simple.read<float>(result_float,2)            == 0_i);        // Must return no error (0), as leafnode does exist
+    expect(t_simple.read<array<char,255>>(result_string,3) == 0_i);        // Must return no error (0), as leafnode does exist
   };
 
+  "read_result_simple_tree"_test = [&]{
+    expect(result_int       == 5_i);
+    expect(result_double0   == 5.5_d);
+    expect(result_float     == -4.5_f);
+    expect(result_string[0] == 'h');
+    expect(result_string[1] == 'e');
+    expect(result_string[2] == 'l');    
+  };
+  
   // Test asymetric tree (Tree with leafnodes in different layers)
   AsymetricTree t_asym;
   "read_exist_asym_tree"_test = [&] {
-    expect(t_asym.read<double>(result_double,1) == 0_i);
+    expect(t_asym.read<double>(result_double0,0)             == 1_i);       // Must return error, as tree was not completely traversed
+    expect(t_asym.read<int>(result_int,0)                    == 1_i);       // Must return error, as tree was not completely traversed
+    expect(t_asym.read<array<char,255>>(result_string,0)     == 1_i);       // Must return error, as tree was not completely traversed
+    expect(t_asym.read<double>(result_double0,1)             == 0_i);       // Must return no error (0), as leafnode does exist
+    expect(t_asym.read<int>(result_int,0,0)                  == 0_i);       // Must return no error (0), as leafnode does exist
+    expect(t_asym.read<double>(result_double1,0,1)           == 0_i);       // Must return no error (0), as leafnode does exist
+    expect(t_asym.read<array<char,255>>(result_string,0,3)   == 0_i);       // Must return no error (0), as leafnode does exist
   };
+
+    "read_result_asym_tree"_test = [&]{
+    expect(result_double0   ==  2.5_d);
+    expect(result_int       ==  5_i);
+    expect(result_float     == -4.5_f);
+    expect(result_double1   ==  5.5_d);
+    expect(result_string[0] ==  'h');
+    expect(result_string[1] ==  'e');
+    expect(result_string[2] ==  'l');    
+  };
+
+
 
 }
