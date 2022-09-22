@@ -14,6 +14,7 @@ set(headers
 
 set(test_sources
   src/read.cpp
+  src/get_ids.cpp
 )
 
 set(experiments_sources

@@ -63,6 +63,17 @@ struct Node{
 
     template<class T, class... Args>
     bool read(T& result, const uint8_t& ID, const Args&... residualIDs);
+
+    bool getChildNum(size_t& result);
+
+    template<convertible_to<uint8_t>... R>
+    bool getChildNum(size_t& result, const uint8_t& ID, const R&... residualIDs);
+
+    template<class T>
+    bool getIDs(T& result);
+
+    template<class T, convertible_to<uint8_t>...R>
+    bool getIDs(T& result, const uint8_t& ID, const R&... residualIDs);
     
     template<class... Ts>
     struct overloaded : Ts... {
