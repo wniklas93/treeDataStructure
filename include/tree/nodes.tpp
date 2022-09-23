@@ -5,15 +5,13 @@
 //#error __FILE__ should only be included from nodes.hpp
 //#endif
 
-#include <iostream>
-
-template<NodeHeader H, NodeLike... N>
-template<uint8_t ID>
-constexpr uint8_t Node<H,N...>::id2idx<ID>::getIndex(){
+template<NodeHeader H>
+template<uint8_t queriedID, uint8_t ID, NodeLike... N>
+constexpr uint8_t Node<H>::id2idx<queriedID,NodeHeaderImpl<ID,N...>>::getIndex(){
             uint8_t idx = 0;
 
             auto mask = array<bool,sizeof...(N)> {
-                ID==N::Header::ID ? true : false...
+                queriedID==N::Header::ID ? true : false...
             };
 
             for(bool element : mask){
@@ -25,11 +23,11 @@ constexpr uint8_t Node<H,N...>::id2idx<ID>::getIndex(){
             }
 
             return idx;
-        }
+}
 
-template<NodeHeader H, NodeLike... N>
+template<NodeHeader H>
 template<class T, class... Args>
-bool Node<H,N...>::read(T& result, const uint8_t& ID, const Args&... residualIDs){
+bool Node<H>::read(T& result, const uint8_t& ID, const Args&... residualIDs){
 
     bool error = true;
         
@@ -47,14 +45,14 @@ bool Node<H,N...>::read(T& result, const uint8_t& ID, const Args&... residualIDs
             {
                 if constexpr ((is_same_v<typename L::Header::type,T>) && (sizeof... (residualIDs) == 0))
                 {
-                   L::Header::guard(ID) ? (error=false, result = get<id2idx<L::Header::ID>::getIndex()>(childs).data,
+                   L::Header::guard(ID) ? (error=false, result = get<id2idx<L::Header::ID,Header>::getIndex()>(children).data,
                    false) : false;
                 }
             },
         [&]<NodeConcept K>(K k){
             if constexpr (sizeof... (residualIDs) > 0)
             {
-                K::Header::guard(ID) ? (error = get<id2idx<K::Header::ID>::getIndex()>(childs).template
+                K::Header::guard(ID) ? (error = get<id2idx<K::Header::ID,Header>::getIndex()>(children).template
                 read<T>(result,residualIDs...),
                 false) : false;
             }
@@ -62,36 +60,33 @@ bool Node<H,N...>::read(T& result, const uint8_t& ID, const Args&... residualIDs
     };
 
     // Apply switch
-    std::apply([&](const auto&... child){ (switcher(child), ...);}, childs);
+    std::apply([&](const auto&... child){ (switcher(child), ...);}, children);
 
-        
-    //return move(ret); does not work because Werror=pessimizing-move
     return error;
 }
 
 
-template<NodeHeader H, NodeLike... N>
-bool Node<H,N...>::getIDs(span<const uint8_t>& result){
-    static constexpr array<uint8_t,sizeof...(N)> childIDs = {{(N::Header::ID)...}};
-    result = span(childIDs.begin(), childIDs.end());
+template<NodeHeader H>
+bool Node<H>::getIDs(span<const uint8_t>& result){
+    result = span(getChildrenIDs<H>::value.begin(), getChildrenIDs<H>::value.end());
     return false;
 }
 
-template<NodeHeader H, NodeLike... N>
+template<NodeHeader H>
 template<convertible_to<uint8_t>... R>
-bool Node<H,N...>::getIDs(span<const uint8_t>& result, const uint8_t& ID, const R&... residualIDs){
+bool Node<H>::getIDs(span<const uint8_t>& result, const uint8_t& ID, const R&... residualIDs){
     bool error = true;
 
     auto switcher = overloaded {
         [&]<LeafNodeConcept L>(L l) {},
         [&]<NodeConcept K>(K k){
-                K::Header::guard(ID) ? (error = get<id2idx<K::Header::ID>::getIndex()>(childs).template
+                K::Header::guard(ID) ? (error = get<id2idx<K::Header::ID, Header>::getIndex()>(children).template
                 getIDs(result,residualIDs...),
                 false) : false;   
         },
     };
 
-    std::apply([&](const auto&... child){ (switcher(child), ...);}, childs);
+    std::apply([&](const auto&... child){ (switcher(child), ...);}, children);
 
     return error;
 }

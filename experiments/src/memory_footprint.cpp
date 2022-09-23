@@ -1,15 +1,12 @@
 
 #include <iostream>
-#include <stdlib.h>
-#include <map>
-#include <string>
+#include <stdint.h>
 #include <variant>
 
 #include <iostream>
 #include <fstream>
 
 #include "tree/nodes.hpp"
-#include "tree/nodeFactory.hpp"
 
 // Function to track memory consumption of objects
 void* operator new(std::size_t sz, std::size_t& allocated){
@@ -19,15 +16,7 @@ void* operator new(std::size_t sz, std::size_t& allocated){
 
 
 // Definition of headers according to tree api
-struct RootHeader{
-    static constexpr uint8_t ID = 0;
-
-    static constexpr auto guard = [](const uint8_t queryID){
-        return true;
-    };
-};
-
-template<uint8_t I>
+template<uint8_t I, NodeLike...>
 struct NodeHeaderImpl{
     static constexpr uint8_t ID = I;
 
@@ -50,48 +39,29 @@ struct LeafHeaderImpl{
 template<uint8_t ID>
 using Zh = LeafNode<LeafHeaderImpl<ID,10,int>>;
 
+template<uint8_t ID>
+using Yh = nodeFactory<ID,Zh,3>::type;
 
 template<uint8_t ID>
-using Yh = nodeFactory<
-                     NodeHeaderImpl<ID>,
-                     Zh,
-                     3
-                     >::type;
+using Xh = nodeFactory<ID,Yh,3>::type;
 
-template<uint8_t ID>
-using Xh = nodeFactory<
-                    NodeHeaderImpl<ID>,
-                    Yh,
-                    3
-                    >::type;
-
-using XYZTree_h = nodeFactory<
-                    RootHeader,
-                    Xh,
-                    3
-                    >::type;
+using XYZTree_h = nodeFactory<0,Xh,3>::type;
 
 // Definition of tree data structure with varying data types
 template<uint8_t ID>
 using Yv = Node<
-                NodeHeaderImpl<ID>,
+            NodeHeaderImpl<
+                ID,
                 LeafNode<LeafHeaderImpl<0,10,int>>,
                 LeafNode<LeafHeaderImpl<1,10,double>>,
                 LeafNode<LeafHeaderImpl<2,10,float>>
-               >;
+             >
+            >;
 
 template<uint8_t ID>
-using Xv = nodeFactory<
-                    NodeHeaderImpl<ID>,
-                    Yv,
-                    3
-                    >::type;
+using Xv = nodeFactory<ID,Yv,3>::type;
 
-using XYZTree_v = nodeFactory<
-                    RootHeader,
-                    Xv,
-                    3
-                    >::type;
+using XYZTree_v = nodeFactory<0,Xv,3>::type;
 
 // Definition of homogenous array data structure
 using XYZArray_h = std::array<std::array<std::array<int,3>,3>,3>;
@@ -112,8 +82,6 @@ int main (){
     size_t allocatedTree_v = 0;
     XYZTree_v* tv = new(allocatedTree_v) XYZTree_v;
 
-    std::cout << allocatedTree_v << std::endl;
-
     // Benchmark simple array data structure
     size_t allocatedArray_h = 0;
     XYZArray_h* ah  = new(allocatedArray_h) XYZArray_h;
@@ -121,8 +89,6 @@ int main (){
     // Benchmark simple array data structure
     size_t allocatedArray_v = 0;
     XYZArray_v* av  = new(allocatedArray_v) XYZArray_v;
-
-    std::cout << allocatedArray_v << std::endl;
 
     // Visualize object memory footprint via gnuplot script
     gnuscript << "$data << EOD \n";

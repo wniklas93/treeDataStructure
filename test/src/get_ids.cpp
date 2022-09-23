@@ -1,20 +1,8 @@
 #include <boost/ut.hpp>
 
 #include "tree/nodes.hpp"
-#include "tree/nodeFactory.hpp"
 
-#include <string>
-
-// Definition of headers according to tree api
-struct RootHeader{
-    static constexpr uint8_t ID = 0;
-
-    static constexpr auto guard = [](const uint8_t queryID){
-        return true;
-    };
-};
-
-template<uint8_t I>
+template<uint8_t I,NodeLike... N>
 struct NodeHeaderImpl{
     static constexpr uint8_t ID = I;
 
@@ -34,17 +22,21 @@ struct LeafHeaderImpl{
 };
 
 using SimpleTree = Node<
-                      NodeHeaderImpl<0>,
-                      LeafNode<LeafHeaderImpl<0,5,int>>,
-                      LeafNode<LeafHeaderImpl<1,5.5,double>>,
-                      LeafNode<LeafHeaderImpl<2,-4.5,float>>,
-                      LeafNode<LeafHeaderImpl<3,array<char,255>{"hello"},array<char,255>>>
-                      >;
+                    NodeHeaderImpl<
+                        0,
+                        LeafNode<LeafHeaderImpl<0,5,int>>,
+                        LeafNode<LeafHeaderImpl<1,5.5,double>>,
+                        LeafNode<LeafHeaderImpl<2,-4.5,float>>,
+                        LeafNode<LeafHeaderImpl<3,array<char,255>{"hello"},array<char,255>>>
+                      >
+                  >;
 
 using AsymetricTree = Node<
-                        RootHeader,
-                        SimpleTree,
-                        LeafNode<LeafHeaderImpl<1,2.5,double>>
+                        NodeHeaderImpl<
+                            0,
+                            SimpleTree,
+                            LeafNode<LeafHeaderImpl<1,2.5,double>>
+                          >
                         >;
 
 int main() {

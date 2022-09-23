@@ -5,13 +5,10 @@
 #include <tuple>
 #include <initializer_list>
 #include <concepts>
-#include <string>
 #include <type_traits>
 #include <array>
 #include <utility>
 #include <span>
-
-#include <iostream>
 
 using namespace std;
 
@@ -38,7 +35,7 @@ concept LeafNodeConcept = requires (T t) {
 
 template<class T>
 concept NodeConcept = requires (T t){
-                            t.childs;
+                            t.children;
                             typename T::Header;
 };
 
@@ -51,17 +48,13 @@ struct LeafNode{
     H::type data = H::defaultValue;
 };
 
+template<uint8_t ID, NodeLike... N>
+struct NodeHeaderImpl;
 
-template<NodeHeader H, NodeLike... N>
+template<NodeHeader H>
 struct Node{
-    using Header = H;
-    tuple<N...> childs{};
-
-    template<uint8_t ID>
-    struct id2idx {
-        static constexpr uint8_t getIndex();
-    };
-
+    
+    // Api functions
     template<class T, class... Args>
     bool read(T& result, const uint8_t& ID, const Args&... residualIDs);
 
@@ -70,14 +63,54 @@ struct Node{
     template<convertible_to<uint8_t>...R>
     bool getIDs(span<const uint8_t>& result, const uint8_t& ID, const R&... residualIDs);
     
+    // Helper functions for internal usage
+    template<uint8_t queriedID, class T> struct id2idx;
+
+    template<uint8_t queriedID, uint8_t ID, NodeLike... N>
+    struct id2idx<queriedID, NodeHeaderImpl<ID,N...>> {
+        static constexpr uint8_t getIndex();
+    };
+
+    template <typename T> struct getChildrenTypes{};
+
+    template<uint8_t ID, NodeLike... N> struct getChildrenTypes<NodeHeaderImpl<ID,N...>>{
+        using types = tuple<N...>;
+    };
+
+    template <typename T> struct getChildrenIDs{};
+
+    template<uint8_t ID, NodeLike... N> struct getChildrenIDs<NodeHeaderImpl<ID,N...>>{
+        static constexpr array<uint8_t, sizeof...(N)> value = {(N::Header::ID)...};
+    };
+    
     template<class... Ts>
     struct overloaded : Ts... {
-         using Ts::operator()...;
-     };
+        using Ts::operator()...;
+    };
 
     template<class... Ts>
-    overloaded(Ts...) -> overloaded<Ts...>; 
-    
+    overloaded(Ts...) -> overloaded<Ts...>;
+
+    // Member variables
+    getChildrenTypes<H>::types children;
+    using Header = H;
+
+};
+
+template<uint8_t ID, template<uint8_t> class T, typename Seq>
+struct expander;
+
+template<uint8_t ID, template<uint8_t> class T, std::size_t... Is>
+struct expander<ID, T, std::index_sequence<Is...>>{
+
+    using type = Node<
+                        NodeHeaderImpl<ID,T<Is>...>
+                    >;
+};
+
+template<uint8_t ID, template<uint8_t> class T, std::size_t N>
+struct nodeFactory {
+    using type = typename expander<ID, T,std::make_index_sequence<N>>::type;
 };
 
 // Include template implementation
