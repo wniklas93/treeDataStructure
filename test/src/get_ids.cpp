@@ -56,20 +56,8 @@ int main() {
         // Test setupt
         SimpleTree t_simple;
 
-        // Test child size
-        std::size_t size;
-        expect(t_simple.getChildNum(size) == 0_i);      // Must return no error (0), as node does exist
-        expect(t_simple.getChildNum(size,0) == 1_i);    // Must return an error (1), as leafnodes haven't got any childs
-        expect(t_simple.getChildNum(size,1) == 1_i);    // Must return an error (1), as leafnodes haven't got any childs
-        expect(t_simple.getChildNum(size,2) == 1_i);    // Must return an error (1), as leafnodes haven't got any childs
-        expect(t_simple.getChildNum(size,3) == 1_i);    // Must return an error (1), as leafnodes haven't got any childs
-        expect(t_simple.getChildNum(size,4) == 1_i);    // Must return an error (1), as node does exist
-
-
-        // Test if error notification is correct
-        t_simple.getChildNum(size);
-        std::cout << size << std::endl;
-        uint8_t IDs[size];
+        // Test if error notification is correct        
+        std::span<const uint8_t> IDs;
         expect(t_simple.getIDs(IDs) == 0_i);        // Must return no error (0), as node does exist
         expect(t_simple.getIDs(IDs,0) == 1_i);      // Must return an error (1), as leafnodes haven't got any childs
         expect(t_simple.getIDs(IDs,1) == 1_i);      // Must return an error (1), as leafnodes haven't got any childs
@@ -79,31 +67,33 @@ int main() {
 
         // Test if return value is correct
         t_simple.getIDs(IDs);
-        //expect(IDs == array<uint8_t, 4>{0,1,2,3});
-
+        std::array<const uint8_t,4> expectedIDs = {0,1,2,3};
+        for(int i = 0; i < 4; i++) expect(expectedIDs[i] == IDs[i]);
     };
 
     "getIDs_asymetric_tree"_test = [&] {
     
         // Test setupt
         AsymetricTree t_asym;
-        array<uint8_t,2> IDs_firstLayer{};
-        array<uint8_t,4> IDs_secondLayer{};
 
         // Test if error notification is correct
-        expect(t_asym.getIDs(IDs_firstLayer)      == 0_i);        // Must return no error (0), as node does exist
-        expect(t_asym.getIDs(IDs_secondLayer,0)   == 0_i);        // Must return no error (0), as node does exist
-        expect(t_asym.getIDs(IDs_secondLayer,2)   == 1_i);        // Must return an error (1), as node does not exist
-        expect(t_asym.getIDs(IDs_secondLayer,1)   == 1_i);        // Must return an error (0), as leafnodes haven't got any child
+        std::span<const uint8_t> IDs;
+        expect(t_asym.getIDs(IDs)     == 0_i);        // Must return no error (0), as node does exist
+        expect(t_asym.getIDs(IDs,0)   == 0_i);        // Must return no error (0), as node does exist
+        expect(t_asym.getIDs(IDs,2)   == 1_i);        // Must return an error (1), as node does not exist
+        expect(t_asym.getIDs(IDs,1)   == 1_i);        // Must return an error (0), as leafnodes haven't got any child
 
         // Test if return value is correct
-        t_asym.getIDs(IDs_firstLayer);
-        t_asym.getIDs(IDs_secondLayer,0);
-        expect(IDs_firstLayer == array<uint8_t, 2>{0,1});
-        expect(IDs_secondLayer == array<uint8_t, 4>{0,1,2,3});
+        // 1) First layer:
+        t_asym.getIDs(IDs);
+        std::array<const uint8_t,2> layer0IDs = {0,1};
+        for(int i = 0; i < 2; i++) expect(layer0IDs[i] == IDs[i]);
+
+        // 2) Second layer:
+        t_asym.getIDs(IDs,0);
+        std::array<const uint8_t,4> layer1IDs = {0,1,2,3};
+        for(int i = 0; i < 4; i++) expect(layer1IDs[i] == IDs[i]);
   };
-
-
 
 
 }

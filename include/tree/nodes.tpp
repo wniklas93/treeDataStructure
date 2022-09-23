@@ -71,41 +71,15 @@ bool Node<H,N...>::read(T& result, const uint8_t& ID, const Args&... residualIDs
 
 
 template<NodeHeader H, NodeLike... N>
-bool Node<H,N...>::getChildNum(size_t& result){
-    result = sizeof...(N);
+bool Node<H,N...>::getIDs(span<const uint8_t>& result){
+    static constexpr array<uint8_t,sizeof...(N)> childIDs = {{(N::Header::ID)...}};
+    result = span(childIDs.begin(), childIDs.end());
     return false;
 }
 
 template<NodeHeader H, NodeLike... N>
 template<convertible_to<uint8_t>... R>
-bool Node<H,N...>::getChildNum(size_t& result, const uint8_t& ID, const R&... residualIDs){
-    bool error = true;
-
-    auto switcher = overloaded {
-        [&]<LeafNodeConcept L>(L l) {},
-        [&]<NodeConcept K>(K k){
-                K::Header::guard(ID) ? (error = get<id2idx<K::Header::ID>::getIndex()>(childs).template
-                getChildNum(result,residualIDs...),
-                false) : false;   
-        },
-    };
-
-    std::apply([&](const auto&... child){ (switcher(child), ...);}, childs);
-
-    return error;
-}
-
-template<NodeHeader H, NodeLike... N>
-template<class T>
-bool Node<H,N...>::getIDs(T& result){
-    // Todo: check on array type
-    result = T{(N::Header::ID)...};
-    return false;
-}
-
-template<NodeHeader H, NodeLike... N>
-template<class T, convertible_to<uint8_t>... R>
-bool Node<H,N...>::getIDs(T& result, const uint8_t& ID, const R&... residualIDs){
+bool Node<H,N...>::getIDs(span<const uint8_t>& result, const uint8_t& ID, const R&... residualIDs){
     bool error = true;
 
     auto switcher = overloaded {
