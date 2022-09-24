@@ -26,10 +26,8 @@ struct NodeHeaderImpl{
 };
 
 template<uint8_t I, auto V, class T>
-struct LeafHeaderImpl{
+struct LeafnodeHeaderImpl{
     static constexpr uint8_t ID = I;
-    using type = T;
-    static constexpr type defaultValue = V;
     static constexpr auto guard = [](const uint8_t& queryID){
         return queryID == ID ? true : false; 
     };
@@ -37,7 +35,7 @@ struct LeafHeaderImpl{
 
 // Definition of homogenous tree data structure
 template<uint8_t ID>
-using Zh = LeafNode<LeafHeaderImpl<ID,10,int>>;
+using Zh = Leafnode<LeafnodeHeaderImpl<ID,10,int>>;
 
 template<uint8_t ID>
 using Yh = nodeFactory<ID,Zh,3>::type;
@@ -52,9 +50,9 @@ template<uint8_t ID>
 using Yv = Node<
             NodeHeaderImpl<
                 ID,
-                LeafNode<LeafHeaderImpl<0,10,int>>,
-                LeafNode<LeafHeaderImpl<1,10,double>>,
-                LeafNode<LeafHeaderImpl<2,10,float>>
+                Leafnode<LeafnodeHeaderImpl<0,10,int>>,
+                Leafnode<LeafnodeHeaderImpl<1,10,double>>,
+                Leafnode<LeafnodeHeaderImpl<2,10,float>>
              >
             >;
 

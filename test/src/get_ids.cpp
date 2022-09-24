@@ -12,10 +12,8 @@ struct NodeHeaderImpl{
 };
 
 template<uint8_t I, auto V, class T>
-struct LeafHeaderImpl{
+struct LeafnodeHeaderImpl{
     static constexpr uint8_t ID = I;
-    using type = T;
-    static constexpr type defaultValue = V;
     static constexpr auto guard = [](const uint8_t& queryID){
         return queryID == ID ? true : false; 
     };
@@ -24,10 +22,10 @@ struct LeafHeaderImpl{
 using SimpleTree = Node<
                     NodeHeaderImpl<
                         0,
-                        LeafNode<LeafHeaderImpl<0,5,int>>,
-                        LeafNode<LeafHeaderImpl<1,5.5,double>>,
-                        LeafNode<LeafHeaderImpl<2,-4.5,float>>,
-                        LeafNode<LeafHeaderImpl<3,array<char,255>{"hello"},array<char,255>>>
+                        Leafnode<LeafnodeHeaderImpl<0,5,int>>,
+                        Leafnode<LeafnodeHeaderImpl<1,5.5,double>>,
+                        Leafnode<LeafnodeHeaderImpl<2,-4.5,float>>,
+                        Leafnode<LeafnodeHeaderImpl<3,array<char,255>{"hello"},array<char,255>>>
                       >
                   >;
 
@@ -35,7 +33,7 @@ using AsymetricTree = Node<
                         NodeHeaderImpl<
                             0,
                             SimpleTree,
-                            LeafNode<LeafHeaderImpl<1,2.5,double>>
+                            Leafnode<LeafnodeHeaderImpl<1,2.5,double>>
                           >
                         >;
 

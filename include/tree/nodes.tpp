@@ -41,9 +41,9 @@ bool Node<H>::read(T& result, const uint8_t& ID, const Args&... residualIDs){
     //               2) Immerse one layer deeper
     
     auto switcher = overloaded {
-        [&]<LeafNodeConcept L>(L l)
+        [&]<LeafnodeConcept L>(L l)
             {
-                if constexpr ((is_same_v<typename L::Header::type,T>) && (sizeof... (residualIDs) == 0))
+                if constexpr ((is_same_v<typename L::datatype,T>) && (sizeof... (residualIDs) == 0))
                 {
                    L::Header::guard(ID) ? (error=false, result = get<id2idx<L::Header::ID,Header>::getIndex()>(children).data,
                    false) : false;
@@ -78,7 +78,7 @@ bool Node<H>::getIDs(span<const uint8_t>& result, const uint8_t& ID, const R&...
     bool error = true;
 
     auto switcher = overloaded {
-        [&]<LeafNodeConcept L>(L l) {},
+        [&]<LeafnodeConcept L>(L l) {},
         [&]<NodeConcept K>(K k){
                 K::Header::guard(ID) ? (error = get<id2idx<K::Header::ID, Header>::getIndex()>(children).template
                 getIDs(result,residualIDs...),
