@@ -9,6 +9,7 @@
 #include <array>
 #include <utility>
 #include <span>
+#include <algorithm>
 
 using namespace std;
 
@@ -101,6 +102,15 @@ struct Node{
     template<uint8_t ID, NodeLike... N>
     struct getChildrenIDs<NodeHeaderImpl<ID,N...>>{
         static constexpr array<uint8_t, sizeof...(N)> value = {(N::Header::ID)...};
+
+        // Check for duplicates in ID-array
+        static consteval bool uniqueIDs(){
+            return [] () {
+                array<uint8_t, sizeof...(N)> childIDs = {(N::Header::ID)...};
+                sort(childIDs.begin(), childIDs.end());
+                return (unique(childIDs.begin(),childIDs.end()) == childIDs.end());
+            } ();
+        }
     };
     
     template<class... Ts>
@@ -115,6 +125,10 @@ struct Node{
     // Member variables
     getChildrenTypes<H>::types children;
     using Header = H;
+
+    // Check for unique children IDs
+    static_assert(getChildrenIDs<H>::uniqueIDs() == true, 
+                  "Children IDs must be unique!");
 
 };
 
