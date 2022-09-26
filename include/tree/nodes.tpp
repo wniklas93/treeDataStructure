@@ -65,6 +65,36 @@ bool Node<H>::read(T& result, const uint8_t& ID, const Args&... residualIDs){
     return error;
 }
 
+template<NodeHeader H>
+template<class T, convertible_to<uint8_t>... I>
+bool Node<H>::write(const T&& value, const uint8_t& ID, const I&... residualIDs){
+    bool error = true;
+
+    auto nodeSwitch = overloaded {
+        [&]<LeafnodeConcept L>(L l)
+            {
+                if constexpr ((is_same_v<typename L::datatype,T>) && (sizeof... (residualIDs) == 0))
+                {
+                   L::Header::guard(ID) ? (error=false, get<id2idx<L::Header::ID,Header>::getIndex()>(children).data = value,
+                   false) : false;
+                }
+            },
+        [&]<NodeConcept K>(K k){
+            if constexpr (sizeof... (residualIDs) > 0)
+            {
+                K::Header::guard(ID) ? (error = get<id2idx<K::Header::ID,Header>::getIndex()>(children).template
+                write<T>(move(value),residualIDs...),
+                false) : false;
+            }
+        },
+    };
+
+    // Apply switch
+    std::apply([&](const auto&... child){ (nodeSwitch(child), ...);}, children);
+
+    return error;
+}
+
 
 template<NodeHeader H>
 bool Node<H>::getIDs(span<const uint8_t>& result){

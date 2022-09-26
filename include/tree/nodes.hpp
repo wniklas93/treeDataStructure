@@ -63,7 +63,8 @@ struct Leafnode{
     };
 
     using datatype = getType<H>::type;
-    static constexpr datatype data = getDefaultValue<H>::value;
+    static constexpr datatype defaultValue = getDefaultValue<H>::value;
+    datatype data = getDefaultValue<H>::value;
     using Header = H;
 };
 
@@ -76,6 +77,9 @@ struct Node{
     // Api functions
     template<class T, class... Args>
     bool read(T& result, const uint8_t& ID, const Args&... residualIDs);
+
+    template<class T, convertible_to<uint8_t>... I>
+    bool write(const T&& value, const uint8_t&ID, const I&... residualIDs);
 
     bool getIDs(span<const uint8_t>& result);
 
