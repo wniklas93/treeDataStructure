@@ -11,19 +11,18 @@
 #include <span>
 #include <algorithm>
 
-using namespace std;
 
 template<class T>
 concept NodeHeader = requires (){
-    {T::ID} -> convertible_to<uint8_t>;
-    T::guard;
+    {T::ID} -> std::convertible_to<uint8_t>;
+    {T::guard} -> std::convertible_to<bool>;
 };
 
 // ToDo: delete (redundant)
 template<class T>
 concept LeafnodeHeader = requires () {
-    {T::ID} -> convertible_to<uint8_t>;
-    T::guard;
+    {T::ID} -> std::convertible_to<uint8_t>;
+    {T::guard} -> std::convertible_to<bool>;
 };
 
 
@@ -47,25 +46,28 @@ struct LeafnodeHeaderImpl;
 
 template<LeafnodeHeader H>
 struct Leafnode{
+    private:
+        // Helpers for internal usage
+        template <class T> struct getType{};
 
-    template <class T> struct getType{};
+        template<uint8_t I, auto V, class T>
+        struct getType<LeafnodeHeaderImpl<I,V,T>>{
+            using type = T;
+        };
 
-    template<uint8_t I, auto V, class T>
-    struct getType<LeafnodeHeaderImpl<I,V,T>>{
-        using type = T;
-    };
+        template <class T> struct getDefaultValue{};
 
-    template <class T> struct getDefaultValue{};
-
-    template<uint8_t I, auto V, class T>
-    struct getDefaultValue<LeafnodeHeaderImpl<I,V,T>>{
-        static constexpr T value = V;
-    };
-
-    using datatype = getType<H>::type;
-    static constexpr datatype defaultValue = getDefaultValue<H>::value;
-    datatype data = getDefaultValue<H>::value;
-    using Header = H;
+        template<uint8_t I, auto V, class T>
+        struct getDefaultValue<LeafnodeHeaderImpl<I,V,T>>{
+            static constexpr T value = V;
+        };
+    
+    public:
+        // Member variables
+        using datatype = getType<H>::type;
+        static constexpr datatype defaultValue = getDefaultValue<H>::value;
+        datatype data = getDefaultValue<H>::value;
+        using Header = H;
 };
 
 template<uint8_t ID, NodeLike... N>
@@ -73,66 +75,69 @@ struct NodeHeaderImpl;
 
 template<NodeHeader H>
 struct Node{
+
+    private:
+        // Helpers for internal usage
+        template<uint8_t queriedID, class T> struct id2idx;
+
+        template<uint8_t queriedID, uint8_t ID, NodeLike... N>
+        struct id2idx<queriedID, NodeHeaderImpl<ID,N...>> {
+            static constexpr uint8_t getIndex();
+        };
+
+        template <typename T> struct getChildrenTypes{};
+
+        template<uint8_t ID, NodeLike... N>
+        struct getChildrenTypes<NodeHeaderImpl<ID,N...>>{
+            using types = std::tuple<N...>;
+        };
+
+        template <typename T> struct getChildrenIDs{};
+
+        template<uint8_t ID, NodeLike... N>
+        struct getChildrenIDs<NodeHeaderImpl<ID,N...>>{
+            static constexpr std::array<uint8_t, sizeof...(N)> value = {(N::Header::ID)...};
+
+            // Check for duplicates in ID-array
+            static consteval bool uniqueIDs(){
+                return [] () {
+                    std::array<uint8_t, sizeof...(N)> childIDs = {(N::Header::ID)...};
+                    std::sort(childIDs.begin(), childIDs.end());
+                    return (std::unique(childIDs.begin(),childIDs.end()) == childIDs.end());
+                } ();
+            }
+        };
     
-    // Api functions
-    template<class T, class... Args>
-    bool read(T& result, const uint8_t& ID, const Args&... residualIDs);
+        template<class... Ts>
+        struct overloaded : Ts... {
+            using Ts::operator()...;
+        };
 
-    template<class T, convertible_to<uint8_t>... I>
-    bool write(const T&& value, const uint8_t&ID, const I&... residualIDs);
+        // Error when using gcc-11:
+        // template<class... Ts>
+        // overloaded(Ts...) -> overloaded<Ts...>;
 
-    bool getIDs(span<const uint8_t>& result);
-
-    template<convertible_to<uint8_t>...R>
-    bool getIDs(span<const uint8_t>& result, const uint8_t& ID, const R&... residualIDs);
+    public:
     
-    // Helper functions for internal usage
-    template<uint8_t queriedID, class T> struct id2idx;
+        // Api functions
+        template<class T, std::convertible_to<uint8_t>... I>
+        bool read(T& result, const uint8_t& ID, const I&... residualIDs) const;
 
-    template<uint8_t queriedID, uint8_t ID, NodeLike... N>
-    struct id2idx<queriedID, NodeHeaderImpl<ID,N...>> {
-        static constexpr uint8_t getIndex();
-    };
+        template<class T, std::convertible_to<uint8_t>... I>
+        bool write(const T&& value, const uint8_t&ID, const I&... residualIDs);
 
-    template <typename T> struct getChildrenTypes{};
+        bool getIDs(std::span<const uint8_t>& result) const;
 
-    template<uint8_t ID, NodeLike... N>
-    struct getChildrenTypes<NodeHeaderImpl<ID,N...>>{
-        using types = tuple<N...>;
-    };
-
-    template <typename T> struct getChildrenIDs{};
-
-    template<uint8_t ID, NodeLike... N>
-    struct getChildrenIDs<NodeHeaderImpl<ID,N...>>{
-        static constexpr array<uint8_t, sizeof...(N)> value = {(N::Header::ID)...};
-
-        // Check for duplicates in ID-array
-        static consteval bool uniqueIDs(){
-            return [] () {
-                array<uint8_t, sizeof...(N)> childIDs = {(N::Header::ID)...};
-                sort(childIDs.begin(), childIDs.end());
-                return (unique(childIDs.begin(),childIDs.end()) == childIDs.end());
-            } ();
-        }
-    };
+        template<std::convertible_to<uint8_t>...R>
+        bool getIDs(std::span<const uint8_t>& result, const uint8_t& ID, const R&... residualIDs) const;
     
-    template<class... Ts>
-    struct overloaded : Ts... {
-        using Ts::operator()...;
-    };
+        // Member variables
+        getChildrenTypes<H>::types children;
+        using Header = H;
 
-    // Error when using gcc-11:
-    // template<class... Ts>
-    // overloaded(Ts...) -> overloaded<Ts...>;
-
-    // Member variables
-    getChildrenTypes<H>::types children;
-    using Header = H;
-
-    // Check for unique children IDs
-    static_assert(getChildrenIDs<H>::uniqueIDs() == true, 
-                  "Children IDs must be unique!");
+        // Check for unique children IDs
+        static_assert(getChildrenIDs<H>::uniqueIDs() == true, 
+                    "Children IDs must be unique!");
 
 };
 

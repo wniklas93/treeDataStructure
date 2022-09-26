@@ -25,7 +25,7 @@ using SimpleTree = Node<
                         Leafnode<LeafnodeHeaderImpl<0,5,int>>,
                         Leafnode<LeafnodeHeaderImpl<1,5.5,double>>,
                         Leafnode<LeafnodeHeaderImpl<2,-4.5,float>>,
-                        Leafnode<LeafnodeHeaderImpl<3,array<char,255>{"hello"},array<char,255>>>
+                        Leafnode<LeafnodeHeaderImpl<3,std::array<char,255>{"hello"},std::array<char,255>>>
                       >
                   >;
 

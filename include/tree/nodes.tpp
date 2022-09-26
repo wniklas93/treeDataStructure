@@ -10,7 +10,7 @@ template<uint8_t queriedID, uint8_t ID, NodeLike... N>
 constexpr uint8_t Node<H>::id2idx<queriedID,NodeHeaderImpl<ID,N...>>::getIndex(){
             uint8_t idx = 0;
 
-            auto mask = array<bool,sizeof...(N)> {
+            auto mask = std::array<bool,sizeof...(N)> {
                 queriedID==N::Header::ID ? true : false...
             };
 
@@ -26,12 +26,12 @@ constexpr uint8_t Node<H>::id2idx<queriedID,NodeHeaderImpl<ID,N...>>::getIndex()
 }
 
 template<NodeHeader H>
-template<class T, class... Args>
-bool Node<H>::read(T& result, const uint8_t& ID, const Args&... residualIDs){
+template<class T, std::convertible_to<uint8_t>... I>
+bool Node<H>::read(T& result, const uint8_t& ID, const I&... residualIDs) const {
 
     bool error = true;
         
-    // Switch with read operation:
+    // Node switch:
     //  |
     //  |-Leafnodes: 1) Filter out leafnodes with data types not matching to query data type   
     //  |            2) Filter out leafnodes with ID not matching queried ID
@@ -40,10 +40,10 @@ bool Node<H>::read(T& result, const uint8_t& ID, const Args&... residualIDs){
     //  |-Node:      1) Filter out nodes with ID not matching queried ID
     //               2) Immerse one layer deeper
     
-    auto switcher = overloaded {
+    auto nodeSwitch = overloaded {
         [&]<LeafnodeConcept L>(L l)
             {
-                if constexpr ((is_same_v<typename L::datatype,T>) && (sizeof... (residualIDs) == 0))
+                if constexpr ((std::is_same_v<typename L::datatype,T>) && (sizeof... (residualIDs) == 0))
                 {
                    L::Header::guard(ID) ? (error=false, result = get<id2idx<L::Header::ID,Header>::getIndex()>(children).data,
                    false) : false;
@@ -60,20 +60,29 @@ bool Node<H>::read(T& result, const uint8_t& ID, const Args&... residualIDs){
     };
 
     // Apply switch
-    std::apply([&](const auto&... child){ (switcher(child), ...);}, children);
+    std::apply([&](const auto&... child){ (nodeSwitch(child), ...);}, children);
 
     return error;
 }
 
 template<NodeHeader H>
-template<class T, convertible_to<uint8_t>... I>
+template<class T, std::convertible_to<uint8_t>... I>
 bool Node<H>::write(const T&& value, const uint8_t& ID, const I&... residualIDs){
     bool error = true;
+
+    // Node switch:
+    //  |
+    //  |-Leafnodes: 1) Filter out leafnodes with data types not matching to query data type   
+    //  |            2) Filter out leafnodes with ID not matching queried ID
+    //  |            3) Write value to leafnode if matching leafnode was found
+    //  |
+    //  |-Node:      1) Filter out nodes with ID not matching queried ID
+    //               2) Immerse one layer deeper
 
     auto nodeSwitch = overloaded {
         [&]<LeafnodeConcept L>(L l)
             {
-                if constexpr ((is_same_v<typename L::datatype,T>) && (sizeof... (residualIDs) == 0))
+                if constexpr ((std::is_same_v<typename L::datatype,T>) && (sizeof... (residualIDs) == 0))
                 {
                    L::Header::guard(ID) ? (error=false, get<id2idx<L::Header::ID,Header>::getIndex()>(children).data = value,
                    false) : false;
@@ -83,7 +92,7 @@ bool Node<H>::write(const T&& value, const uint8_t& ID, const I&... residualIDs)
             if constexpr (sizeof... (residualIDs) > 0)
             {
                 K::Header::guard(ID) ? (error = get<id2idx<K::Header::ID,Header>::getIndex()>(children).template
-                write<T>(move(value),residualIDs...),
+                write<T>(std::move(value),residualIDs...),
                 false) : false;
             }
         },
@@ -97,17 +106,24 @@ bool Node<H>::write(const T&& value, const uint8_t& ID, const I&... residualIDs)
 
 
 template<NodeHeader H>
-bool Node<H>::getIDs(span<const uint8_t>& result){
-    result = span(getChildrenIDs<H>::value.begin(), getChildrenIDs<H>::value.end());
+bool Node<H>::getIDs(std::span<const uint8_t>& result) const{
+    result = std::span(getChildrenIDs<H>::value.begin(), getChildrenIDs<H>::value.end());
     return false;
 }
 
 template<NodeHeader H>
-template<convertible_to<uint8_t>... R>
-bool Node<H>::getIDs(span<const uint8_t>& result, const uint8_t& ID, const R&... residualIDs){
+template<std::convertible_to<uint8_t>... R>
+bool Node<H>::getIDs(std::span<const uint8_t>& result, const uint8_t& ID, const R&... residualIDs) const{
     bool error = true;
 
-    auto switcher = overloaded {
+    // Node switch:
+    //  |
+    //  |-Leafnodes: 1) Do nothing as leafnodes haven't got any children
+    //  |
+    //  |-Node:      1) Filter out nodes with ID not matching queried ID
+    //               2) Get children IDs
+
+    auto nodeSwitch = overloaded {
         [&]<LeafnodeConcept L>(L l) {},
         [&]<NodeConcept K>(K k){
                 K::Header::guard(ID) ? (error = get<id2idx<K::Header::ID, Header>::getIndex()>(children).template
@@ -116,7 +132,7 @@ bool Node<H>::getIDs(span<const uint8_t>& result, const uint8_t& ID, const R&...
         },
     };
 
-    std::apply([&](const auto&... child){ (switcher(child), ...);}, children);
+    std::apply([&](const auto&... child){ (nodeSwitch(child), ...);}, children);
 
     return error;
 }
