@@ -18,6 +18,7 @@ concept NodeHeader = requires (){
     T::guard;
 };
 
+// ToDo: delete (redundant)
 template<class T>
 concept LeafnodeHeader = requires () {
     {T::ID} -> convertible_to<uint8_t>;
@@ -61,7 +62,7 @@ struct Leafnode{
     };
 
     using datatype = getType<H>::type;
-    datatype data = getDefaultValue<H>::value;
+    static constexpr datatype data = getDefaultValue<H>::value;
     using Header = H;
 };
 
