@@ -108,8 +108,9 @@ struct Node{
         using Ts::operator()...;
     };
 
-    template<class... Ts>
-    overloaded(Ts...) -> overloaded<Ts...>;
+    // Error when using gcc-11:
+    // template<class... Ts>
+    // overloaded(Ts...) -> overloaded<Ts...>;
 
     // Member variables
     getChildrenTypes<H>::types children;
