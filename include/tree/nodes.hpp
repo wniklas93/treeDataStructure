@@ -44,37 +44,50 @@ struct ReadOperation{
     public:
 
         template<LeafnodeConcept L>
-        bool visit(L* l){
+        static bool visit(L* l){
             value = l->data;
         return false;
         }
 
         template<class T>
-        const T getValue(){
+        static const T getValue(){
             return std::any_cast<T>(value);
         }
 
     private:
-        std::any value;
+        inline static std::any value;
 };
 
 struct WriteOperation{
     public:
 
         template<LeafnodeConcept L>
-        bool visit(L* l){
+        static bool visit(L* l){
             l->data = std::any_cast<typename L::datatype>(value);
         return false;
         }
 
         template<class T>
-        void setValue(const T& v){
+        static void setValue(const T& v){
             value = v;
             
         }
 
     private:
-        std::any value;
+        inline static std::any value;
+};
+
+struct GetIDsOperation{
+    public:
+        
+        template<NodeConcept N>
+        static bool visit(N* n){
+            //value = std::span(N::template getChildrenIDs<N::H>::value.begin(), N::template getChildrenIDs<N::H>::value.end());
+            
+            return false;
+        }
+        
+        inline static std::span<const uint8_t> value;
 };
 
 // Data structure
@@ -107,9 +120,9 @@ struct Leafnode{
         using Header = H;
 
         template<Visitor V>
-        bool accept(V& v) {
+        bool accept() {
             using L = std::remove_pointer_t<decltype(this)>;
-            return v.template visit<L>(this);
+            return  V::template visit<L>(this);
         }
 };
 
@@ -155,25 +168,41 @@ struct Node{
         struct overloaded : Ts... {
             using Ts::operator()...;
         };
-    
+
+        template<class... Ts>
+        struct TypeList{};
+
+        template<class T, class... Ts>
+        struct inTypeList;
+
+        template<class T, class... Ts>
+        struct inTypeList<T,TypeList<Ts...>>{
+            static constexpr bool value = (std::is_same_v<T,Ts> || ...);
+        };
+        int k = 0;
     public:
 
-        template<Visitor V,std::convertible_to<uint8_t>... Is>
-        bool traverse(V& v,const uint8_t& ID, const Is&... residualIDs){
+        template<Visitor V>
+        bool traverse(){
+                return accept<V>();
+        }
+
+        template<Visitor V, std::convertible_to<uint8_t>... Is>
+        bool traverse(const uint8_t& ID, const Is&... residualIDs){
             bool error = true;
             
             auto nodeSwitch = overloaded {
                 [&]<LeafnodeConcept L>(L& l) {
-                        if(L::Header::guard(ID)) error = l.template accept(v);
+                        if(L::Header::guard(ID)) error = l.template accept<V>();
                 },
                 [&]<NodeConcept K>(K& k){
                     if constexpr (sizeof... (residualIDs) > 0)
                     {
                         K::Header::guard(ID) ? (error = get<id2idx<K::Header::ID,Header>::getIndex()>(children).template
-                        traverse<V>(v, residualIDs...),
+                        traverse<V>(residualIDs...),
                         false) : false;
                     } else {
-                        accept(v);
+                        error = k.template accept<V>();
                     }
                 },
             };
@@ -186,7 +215,13 @@ struct Node{
         }
 
         template<Visitor V>
-        bool accept(V& v){
+        bool accept(){
+            
+            if constexpr(inTypeList<V,validOperations>::value){
+                using N = std::remove_pointer_t<decltype(this)>;
+                return V::template visit<N>(this);
+            }
+            
             return true;
         }
     
@@ -194,6 +229,9 @@ struct Node{
         // Member variables
         getChildrenTypes<H>::types children;
         using Header = H;
+
+        // Supported operations
+        using validOperations = TypeList<GetIDsOperation>;
 
         // Check for unique children IDs
         static_assert(getChildrenIDs<H>::uniqueIDs() == true, 

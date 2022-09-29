@@ -13,7 +13,7 @@ set(headers
 
 set(test_sources
   src/read_write.cpp
-#  src/get_ids.cpp
+  src/get_ids.cpp
 )
 
 set(experiments_sources
