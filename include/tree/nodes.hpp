@@ -25,8 +25,8 @@ concept LeafnodeConcept = requires (T t) {
 
 template<class T>
 concept NodeConcept = requires (T t){
-                            t.children;
                             typename T::Header;
+                            t.getChildrenIDs();
 };
 
 template<class T>
@@ -187,6 +187,13 @@ struct Node{
 
         // Supported operations
         using validOperations = TypeList<GetIDsOperation>;
+
+        // Member variables
+        getChildrenTypes<H>::types children;
+
+        // Check for unique children IDs
+        static_assert(ChildrenIDs<H>::uniqueIDs() == true, 
+                    "Children IDs must be unique!");
         
     public:
 
@@ -202,8 +209,7 @@ struct Node{
                  
                     if constexpr (sizeof... (residualIDs) > 0)
                     {
-                        K::Header::guard(ID) ? (error = std::get<id2idx<K::Header::ID,Header>::getIndex()>(children).template
-                        traverse<V>(residualIDs...),
+                        K::Header::guard(ID) ? (error = k.template traverse<V>(residualIDs...),
                         false) : false;
                     } else {
                         K::Header::guard(ID) ? error = k.template accept<V>() : false;
@@ -234,15 +240,7 @@ struct Node{
                              ChildrenIDs<H>::value.end());
         }
     
-    
-        // Member variables
-        getChildrenTypes<H>::types children;
         using Header = H;
-
-        // Check for unique children IDs
-        static_assert(ChildrenIDs<H>::uniqueIDs() == true, 
-                    "Children IDs must be unique!");
-
 };
 
 template<uint8_t ID, template<uint8_t> class T, typename Seq>
@@ -260,7 +258,5 @@ template<uint8_t ID, template<uint8_t> class T, std::size_t N>
 struct nodeFactory {
     using type = typename expander<ID, T,std::make_index_sequence<N>>::type;
 };
-
-#include "nodes.tpp"
 
 #endif
