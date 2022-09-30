@@ -197,10 +197,14 @@ struct Node{
             
             auto nodeSwitch = overloaded {
                 [&]<LeafnodeConcept L>(L& l) {
+                    
+                    if constexpr (sizeof... (residualIDs) == 0)
+                    {
                         if(L::Header::guard(ID)) error = l.template accept<V>();
+                    }
                 },
                 [&]<NodeConcept K>(K& k){
-                 
+                    
                     if constexpr (sizeof... (residualIDs) > 0)
                     {
                         K::Header::guard(ID) ? (error = k.template traverse<V>(residualIDs...),
