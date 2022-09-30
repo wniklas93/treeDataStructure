@@ -1,7 +1,11 @@
 
-#include <boost/ut.hpp>
+#include <string>
+#include <chrono>
 
+#include <boost/ut.hpp>
 #include "tree/nodes.hpp"
+
+
 
 template<uint8_t I,NodeLike... N>
 struct NodeHeaderImpl{
@@ -20,13 +24,29 @@ struct LeafnodeHeaderImpl{
     };
 };
 
+struct Mock {
+  public:
+    constexpr Mock(int k){};
+    constexpr ~Mock(){};
+    constexpr Mock operator=(Mock m){
+      return Mock(4);
+    };
+
+    float f = 2.3;
+
+  private: 
+    int i = 0;
+};
+
 using SimpleTree = Node<
                     NodeHeaderImpl<
                         0,
                         Leafnode<LeafnodeHeaderImpl<0,5,int>>,
                         Leafnode<LeafnodeHeaderImpl<1,5.5,double>>,
                         Leafnode<LeafnodeHeaderImpl<2,-4.5,float>>,
-                        Leafnode<LeafnodeHeaderImpl<3,std::array<char,255>{"hello"},std::array<char,255>>>
+                        Leafnode<LeafnodeHeaderImpl<3,std::array<char,255>{"hello"},std::array<char,255>>>,
+                        Leafnode<LeafnodeHeaderImpl<4,5,std::chrono::seconds>>,
+                        Leafnode<LeafnodeHeaderImpl<5,4,Mock>>
                       >
                   >;
 
@@ -44,21 +64,26 @@ int main() {
   
   // Test simple tree (Tree with one layer)
   SimpleTree t_simple;
-
+  
   "read_simple_tree"_test = [&] {
-    expect(t_simple.traverse<ReadOperation>(4)                 == 1_i);        // Must return an error (1), as leafnode does not exist
-    expect(t_simple.traverse<ReadOperation>(-4)                == 1_i);        // Must return an error (1), as leafnode does not exist
-    expect(t_simple.traverse<ReadOperation>(5)                 == 1_i);        // Must return an error (1), as leafnode does not exist
-    expect(t_simple.traverse<ReadOperation>(0)                 == 0_i);        // Must return no error (0), as leafnode does exist
-    expect(ReadOperation::getValue<int>()                      == 5_i);        // Variable must equal 5, as 5 was written to leafnode
-    expect(t_simple.traverse<ReadOperation>(1)                 == 0_i);     // Must return no error (0), as leafnode does exist
-    expect(ReadOperation::getValue<double>()                   == 5.5_d);   // Variable must equal 5.5, as 5.5 was written to leafnode
-    expect(t_simple.traverse<ReadOperation>(2)                 == 0_i);     // Must return no error (0), as leafnode does exist
-    expect(ReadOperation::getValue<float>()                    == -4.5_f);  // Variable must equal -4.5, as -4.5 was written to leafnode
-    expect(t_simple.traverse<ReadOperation>(3)                 == 0_i);        // Must return no error (0), as leafnode does exist
-    expect(ReadOperation::getValue<std::array<char,255>>()[0]  == 'h');        // Variable must equal "hello", as "hello" was written to leafnode
-    expect(ReadOperation::getValue<std::array<char,255>>()[1]  == 'e');
-    expect(ReadOperation::getValue<std::array<char,255>>()[2]  == 'l');
+    expect(t_simple.traverse<ReadOperation>(6)                      == 1_i);        // Must return an error (1), as leafnode does not exist
+    expect(t_simple.traverse<ReadOperation>(0,1,2)                  == 1_i);        // Must return an error (1), as leafnode does not exist
+    expect(t_simple.traverse<ReadOperation>(-4)                     == 1_i);        // Must return an error (1), as leafnode does not exist
+    expect(t_simple.traverse<ReadOperation>(7)                      == 1_i);        // Must return an error (1), as leafnode does not exist
+    expect(t_simple.traverse<ReadOperation>(0)                      == 0_i);        // Must return no error (0), as leafnode does exist
+    expect(ReadOperation::getValue<int>()                           == 5_i);        // Variable must equal 5, as 5 was written to leafnode
+    expect(t_simple.traverse<ReadOperation>(1)                      == 0_i);        // Must return no error (0), as leafnode does exist
+    expect(ReadOperation::getValue<double>()                        == 5.5_d);      // Variable must equal 5.5, as 5.5 was written to leafnode
+    expect(t_simple.traverse<ReadOperation>(2)                      == 0_i);        // Must return no error (0), as leafnode does exist
+    expect(ReadOperation::getValue<float>()                         == -4.5_f);     // Variable must equal -4.5, as -4.5 was written to leafnode
+    expect(t_simple.traverse<ReadOperation>(3)                      == 0_i);        // Must return no error (0), as leafnode does exist
+    expect(ReadOperation::getValue<std::array<char,255>>()[0]       == 'h');        // Variable must equal "hello", as "hello" was written to leafnode
+    expect(ReadOperation::getValue<std::array<char,255>>()[1]       == 'e');
+    expect(ReadOperation::getValue<std::array<char,255>>()[2]       == 'l');
+    expect(t_simple.traverse<ReadOperation>(4)                      == 0_i);
+    expect(ReadOperation::getValue<std::chrono::seconds>().count()  == 5_i);
+    expect(t_simple.traverse<ReadOperation>(5)                      == 0_i);
+    expect(ReadOperation::getValue<Mock>().f                        == 2.3_f);
    };
 
   "write_simple_tree"_test = [&] {
@@ -79,26 +104,36 @@ int main() {
     expect(t_simple.traverse<ReadOperation>(3)                                    == 0_i);            // Must return no error (0), as leafnode does exist
     expect(ReadOperation::getValue<std::array<char,255>>()[0]                     == 't');            // Variable must equal 'test', as 'test was written to leafnode
     expect(ReadOperation::getValue<std::array<char,255>>()[1]                     == 'e');
+    WriteOperation::setValue<std::chrono::seconds>(std::chrono::seconds(8));
+    expect(t_simple.traverse<WriteOperation>(4)                                   == 0_i);            // Must return no error (0), as leafnode does exist
+    expect(t_simple.traverse<ReadOperation>(4)                                    == 0_i);            // Must return no error (0), as leafnode does exist
+    expect(ReadOperation::getValue<std::chrono::seconds>().count()                == 8_i);  
  };
 
     // Test asymetric tree (Tree with leafnodes in different layers)
     AsymetricTree t_asym;
   "read_exist_asym_tree"_test = [&] {
-    expect(t_asym.traverse<ReadOperation>(0,6)                 == 1_i);        // Must return an error (1), as leafnode does not exist
-    //expect(t_asym.traverse(read,1,-4)                  == 1_i);        // Must return an error (1), as leafnode does not exist
-    expect(t_asym.traverse<ReadOperation>(0,5)                 == 1_i);        // Must return an error (1), as leafnode does not exist
-    expect(t_asym.traverse<ReadOperation>(0,0)                 == 0_i);        // Must return no error (0), as leafnode does exist
-    expect(ReadOperation::getValue<int>()                      == 5_i);        // Variable must equal 5, as 5 was written to leafnode
-    expect(t_asym.traverse<ReadOperation>(0,1)                 == 0_i);        // Must return no error (0), as leafnode does exist
-    expect(ReadOperation::getValue<double>()                   == 5.5_d);      // Variable must equal 5.5, as 5.5 was written to leafnode
-    expect(t_asym.traverse<ReadOperation>(0,2)                 == 0_i);        // Must return no error (0), as leafnode does exist
-    expect(ReadOperation::getValue<float>()                    == -4.5_f);     // Variable must equal -4.5, as -4.5 was written to leafnode
-    expect(t_asym.traverse<ReadOperation>(0,3)                 == 0_i);        // Must return no error (0), as leafnode does exist
-    expect(ReadOperation::getValue<std::array<char,255>>()[0]  == 'h');        // Variable must equal "hello", as "hello" was written to leafnode
-    expect(ReadOperation::getValue<std::array<char,255>>()[1]  == 'e');
-    expect(ReadOperation::getValue<std::array<char,255>>()[2]  == 'l');
-    expect(t_asym.traverse<ReadOperation>(1)                   == 0_i);        // Must return no error (0), as leafnode does exist
-    expect(ReadOperation::getValue<double>()                   == 2.5_d);      // Variable must equal 2.5, as 2.5 was written to leafnode
+    expect(t_asym.traverse<ReadOperation>(0,6)                      == 1_i);        // Must return an error (1), as leafnode does not exist
+    std::cout << "now" << std::endl;
+    expect(t_asym.traverse<ReadOperation>(1,14)                     == 1_i);        // Must return an error (1), as leafnode does not exist
+    std::cout << "end" << std::endl;
+    expect(t_asym.traverse<ReadOperation>(0,7)                      == 1_i);        // Must return an error (1), as leafnode does not exist
+    expect(t_asym.traverse<ReadOperation>(0,0)                      == 0_i);        // Must return no error (0), as leafnode does exist
+    expect(ReadOperation::getValue<int>()                           == 5_i);        // Variable must equal 5, as 5 was written to leafnode
+    expect(t_asym.traverse<ReadOperation>(0,1)                      == 0_i);        // Must return no error (0), as leafnode does exist
+    expect(ReadOperation::getValue<double>()                        == 5.5_d);      // Variable must equal 5.5, as 5.5 was written to leafnode
+    expect(t_asym.traverse<ReadOperation>(0,2)                      == 0_i);        // Must return no error (0), as leafnode does exist
+    expect(ReadOperation::getValue<float>()                         == -4.5_f);     // Variable must equal -4.5, as -4.5 was written to leafnode
+    expect(t_asym.traverse<ReadOperation>(0,3)                      == 0_i);        // Must return no error (0), as leafnode does exist
+    expect(ReadOperation::getValue<std::array<char,255>>()[0]       == 'h');        // Variable must equal "hello", as "hello" was written to leafnode
+    expect(ReadOperation::getValue<std::array<char,255>>()[1]       == 'e');
+    expect(ReadOperation::getValue<std::array<char,255>>()[2]       == 'l');
+    expect(t_asym.traverse<ReadOperation>(1)                        == 0_i);        // Must return no error (0), as leafnode does exist
+    expect(ReadOperation::getValue<double>()                        == 2.5_d);      // Variable must equal 2.5, as 2.5 was written to leafnode
+    expect(t_asym.traverse<ReadOperation>(0,4)                      == 0_i);
+    expect(ReadOperation::getValue<std::chrono::seconds>().count()  == 5_i);
+    expect(t_asym.traverse<ReadOperation>(0,5)                      == 0_i);
+    expect(ReadOperation::getValue<Mock>().f                        == 2.3_f);
   };
 
   "write_asym_tree"_test = [&] {

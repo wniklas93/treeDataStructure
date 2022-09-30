@@ -107,18 +107,12 @@ template<NodeHeader H>
 struct Leafnode{
     private:
         // Helpers for internal usage
-        template <class T> struct getType{};
-
-        template<uint8_t I, auto V, class T>
-        struct getType<LeafnodeHeaderImpl<I,V,T>>{
-            using type = T;
-        };
-
         template <class T> struct getDefaultValue{};
 
         template<uint8_t I, auto V, class T>
         struct getDefaultValue<LeafnodeHeaderImpl<I,V,T>>{
-            static constexpr T value = V;
+            using type = T;
+            static constexpr T value = T(V);
         };
 
         // Supported operations
@@ -127,7 +121,7 @@ struct Leafnode{
     
     public:
         // Member variables
-        using datatype = getType<H>::type;
+        using datatype = getDefaultValue<H>::type;
         static constexpr datatype defaultValue = getDefaultValue<H>::value;
         datatype data = getDefaultValue<H>::value;
         using Header = H;
