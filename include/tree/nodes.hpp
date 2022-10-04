@@ -53,7 +53,7 @@ struct ReadOperation{
         }
 
     private:
-        inline static std::any value;
+        inline static std::any value = nullptr;
 };
 
 struct WriteOperation{
@@ -72,7 +72,7 @@ struct WriteOperation{
         }
 
     private:
-        inline static std::any value;
+        inline static std::any value = nullptr;
 };
 
 struct GetIDsOperation{
@@ -112,7 +112,10 @@ struct Leafnode{
         template<uint8_t I, auto V, class T>
         struct getDefaultValue<LeafnodeHeaderImpl<I,V,T>>{
             using type = T;
-            static constexpr T value = T(V);
+
+            constexpr static T value(){
+                return T(V);
+            }
         };
 
         // Supported operations
@@ -122,8 +125,7 @@ struct Leafnode{
     public:
         // Member variables
         using datatype = getDefaultValue<H>::type;
-        static constexpr datatype defaultValue = getDefaultValue<H>::value;
-        datatype data = getDefaultValue<H>::value;
+        datatype data = getDefaultValue<H>::value();
         using Header = H;
 
         template<Visitor V>
