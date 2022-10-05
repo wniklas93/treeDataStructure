@@ -11,17 +11,26 @@ template<uint8_t I,NodeLike... N>
 struct NodeHeaderImpl{
     static constexpr uint8_t ID = I;
 
-    static constexpr auto guard = [](const uint8_t& queryID){
-        return queryID == ID ? true : false; 
-    };
+    template<Visitor Vi>
+    static bool guard(const uint8_t& queryID){
+      return queryID == ID ? true : false;
+    }
+
+    // static constexpr auto guard = []<Visitor Vi>(const uint8_t& queryID){
+    //     return queryID == ID ? true : false; 
+    // };
 };
 
 template<uint8_t I, auto V, class T>
 struct LeafnodeHeaderImpl{
     static constexpr uint8_t ID = I;
-    static constexpr auto guard = [](const uint8_t& queryID){
-        return queryID == ID ? true : false; 
-    };
+    template<Visitor Vi>
+    static bool guard(const uint8_t& queryID){
+      return queryID == ID ? true : false;
+    }
+    //static constexpr auto guard = []<Visitor Vi>(const uint8_t& queryID){
+    //    return queryID == ID ? true : false; 
+    //};
 };
 
 struct Mock {
