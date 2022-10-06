@@ -7,7 +7,7 @@ struct NodeHeaderImpl{
     static constexpr uint8_t ID = I;
 
     template<Visitor Vi>
-    static bool guard(const uint8_t& queryID){
+    bool guard(const uint8_t& queryID){
       return queryID == ID ? true : false;
     }
 
@@ -20,7 +20,7 @@ template<uint8_t I, auto V, class T>
 struct LeafnodeHeaderImpl{
     static constexpr uint8_t ID = I;
     template<Visitor Vi>
-    static bool guard(const uint8_t& queryID){
+    bool guard(const uint8_t& queryID){
       return queryID == ID ? true : false;
     }
     //static constexpr auto guard = []<Visitor Vi>(const uint8_t& queryID){
@@ -57,7 +57,7 @@ int main() {
 
         // Test if error notification is correct
         uint8_t ID0 = 0; uint8_t ID1 = 1; uint8_t ID2 = 2;        
-        expect(t_simple.accept<GetIDsOperation>()              == 0_i);                      // Must return no error (0), as node does exist
+        expect(t_simple.accept<GetIDsOperation>()              == 0_i);                   // Must return no error (0), as node does exist
         expect(t_simple.traverse<GetIDsOperation>(0)           == 1_i);                   // Must return an error (1), as leafnodes haven't got any childs
         expect(t_simple.traverse<GetIDsOperation>(1)           == 1_i);                   // Must return an error (1), as leafnodes haven't got any childs
         expect(t_simple.traverse<GetIDsOperation>(2)           == 1_i);                   // Must return an error (1), as leafnodes haven't got any childs

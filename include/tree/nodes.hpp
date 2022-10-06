@@ -56,9 +56,9 @@ namespace archetypes{
 }
 
 template<class T>
-concept NodeHeader = requires (uint8_t ID){
+concept NodeHeader = requires (uint8_t ID, T t){
     {T::ID} -> std::convertible_to<uint8_t>;
-    {T::template guard<archetypes::Visitor>(ID)} -> std::same_as<bool>;
+    {t.template guard<archetypes::Visitor>(ID)} -> std::same_as<bool>;
 };
 
 
@@ -142,6 +142,26 @@ struct GetIDsOperation{
         inline static std::span<const uint8_t> value;
 };
 
+struct CreateOperation{
+    public:
+
+        template<NodeLike N>
+        static bool visit(N* n){
+            n->header.active = true;
+            return false;
+        }
+};
+
+struct DeleteOperation{
+    public:
+        
+        template<NodeLike N>
+        static bool visit(N* n){
+            n->header.active = false;
+            return false;
+        }
+};
+
 // Data structure
 template<class... Ts>
 struct TypeList{};
@@ -174,7 +194,9 @@ struct Leafnode{
 
         // Supported operations
         using validOperations = TypeList<ReadOperation,
-                                         WriteOperation>;
+                                         WriteOperation,
+                                         CreateOperation,
+                                         DeleteOperation>;
     
     public:
         // Member variables
@@ -239,7 +261,9 @@ struct Node{
         };
 
         // Supported operations
-        using validOperations = TypeList<GetIDsOperation>;
+        using validOperations = TypeList<GetIDsOperation,
+                                         CreateOperation,
+                                         DeleteOperation>;
 
         // Member variables
         getChildrenTypes<H>::types children;
@@ -279,6 +303,15 @@ struct Node{
 
             return error;
             
+        }
+
+        template<Visitor V>
+        bool traverse(){
+            bool error = true;
+            
+            header.template guard<V>(header.ID) ? error = accept<V>() : false;
+
+            return error;
         }
 
         template<Visitor V>
