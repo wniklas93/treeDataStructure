@@ -9,6 +9,7 @@
 #include <any>
 
 // Data structure interface
+// Todo: Code revision of concepts/interface
 namespace archetypes{
 
     struct Visitor{
@@ -49,9 +50,8 @@ namespace archetypes{
 
         struct R {};
 
-        using Header = NodeHeader;
-        using datatype = R;
-        datatype data;
+        NodeHeader header;
+        R data;
     };
 }
 
@@ -64,15 +64,14 @@ concept NodeHeader = requires (uint8_t ID){
 
 template<class T>
 concept LeafnodeConcept = requires (T t) {
-                            {t.data} -> std::convertible_to<std::semiregular>;
+                            {t.data}; //-> std::convertible_to<std::semiregular>;
                             {t.template accept<archetypes::Visitor>()} -> std::same_as<bool>;
-                            typename T::Header;
-                            typename T::datatype;
+                            t.header;
 };
 
 template<class T>
 concept NodeConcept = requires (T t, uint8_t ID){
-                            typename T::Header;
+                             t.header;
                             {t.getChildrenIDs()} -> std::same_as<std::span<const uint8_t>>;
                             {t.template accept<archetypes::Visitor>()} -> std::same_as<bool>;
                             {t.template traverse<archetypes::Visitor>(ID)} -> std::same_as<bool>;
@@ -116,7 +115,7 @@ struct WriteOperation{
 
         template<LeafnodeConcept L>
         static bool visit(L* l){
-            l->data = std::any_cast<typename L::datatype>(value);
+            l->data = std::any_cast<decltype(l->data)>(value);
         return false;
         }
 
@@ -179,9 +178,8 @@ struct Leafnode{
     
     public:
         // Member variables
-        using datatype = getDefaultValue<H>::type;
-        datatype data = getDefaultValue<H>::value();
-        using Header = H;
+        getDefaultValue<H>::type data = getDefaultValue<H>::value();
+        H header;
 
         template<Visitor V>
         bool accept() {
@@ -190,6 +188,10 @@ struct Leafnode{
                 return V::template visit<L>(this);
             }
             return true;
+        }
+
+       static constexpr uint8_t getID() {
+            return H::ID;
         }
 };
 
@@ -219,12 +221,12 @@ struct Node{
 
         template<uint8_t ID, NodeLike... N>
         struct ChildrenIDs<NodeHeaderImpl<ID,N...>>{
-            static constexpr std::array<uint8_t, sizeof...(N)> value = {(N::Header::ID)...};
+            static constexpr std::array<uint8_t, sizeof...(N)> value = {(N::getID())...};
 
             // Check for duplicates in ID-array
             static consteval bool uniqueIDs(){
                 return [] () {
-                    std::array<uint8_t, sizeof...(N)> childIDs = {(N::Header::ID)...};
+                    std::array<uint8_t, sizeof...(N)> childIDs = {(N::getID())...};
                     std::sort(childIDs.begin(), childIDs.end());
                     return (std::unique(childIDs.begin(),childIDs.end()) == childIDs.end());
                 } ();
@@ -257,17 +259,17 @@ struct Node{
                     
                     if constexpr (sizeof... (residualIDs) == 0)
                     {
-                        if(L::Header::template guard<V>(ID)) error = l.template accept<V>();
+                        if(l.header.template guard<V>(ID)) error = l.template accept<V>();
                     }
                 },
                 [&]<NodeConcept K>(K& k){
                     
                     if constexpr (sizeof... (residualIDs) > 0)
                     {
-                        K::Header::template guard<V>(ID) ? (error = k.template traverse<V>(residualIDs...),
+                        k.header.template guard<V>(ID) ? (error = k.template traverse<V>(residualIDs...),
                         false) : false;
                     } else {
-                        K::Header::template guard<V>(ID) ? error = k.template accept<V>() : false;
+                        k.header.template guard<V>(ID) ? error = k.template accept<V>() : false;
                     }
                 },
             };
@@ -294,8 +296,12 @@ struct Node{
             return std::span(ChildrenIDs<H>::value.begin(), 
                              ChildrenIDs<H>::value.end());
         }
+
+       static constexpr uint8_t getID() {
+            return H::ID;
+        }
     
-        using Header = H;
+        H header;
 };
 
 template<uint8_t ID, template<uint8_t> class T, typename Seq>
