@@ -30,6 +30,8 @@ namespace archetypes{
 
         static constexpr uint8_t ID{0};
 
+        static constexpr bool active = true;
+
         template<class V>
         static bool guard(uint8_t ID){return true;}; 
     };
@@ -48,6 +50,8 @@ namespace archetypes{
 
         std::span<const uint8_t> getChildrenIDs() const {return std::span<uint8_t>{};};
 
+        bool activeChild(const uint8_t& ID){return true;}
+
         struct R {};
 
         NodeHeader header;
@@ -58,6 +62,7 @@ namespace archetypes{
 template<class T>
 concept NodeHeader = requires (uint8_t ID, T t){
     {T::ID} -> std::convertible_to<uint8_t>;
+    {T::active} -> std::convertible_to<uint8_t>;
     {t.template guard<archetypes::Visitor>(ID)} -> std::same_as<bool>;
 };
 
@@ -71,8 +76,9 @@ concept LeafnodeConcept = requires (T t) {
 
 template<class T>
 concept NodeConcept = requires (T t, uint8_t ID){
-                             t.header;
+                            t.header;
                             {t.getChildrenIDs()} -> std::same_as<std::span<const uint8_t>>;
+                            {t.activateChild(ID)} -> std::same_as<bool>;
                             {t.template accept<archetypes::Visitor>()} -> std::same_as<bool>;
                             {t.template traverse<archetypes::Visitor>(ID)} -> std::same_as<bool>;
 };
@@ -92,6 +98,11 @@ static_assert(NodeLike<archetypes::NodeLike>);
 
 
 // Operations
+template<class... Ts>
+struct overloaded : Ts... {
+    using Ts::operator()...;
+};
+
 struct ReadOperation{
     public:
 
@@ -147,9 +158,13 @@ struct CreateOperation{
 
         template<NodeLike N>
         static bool visit(N* n){
-            n->header.active = true;
+            n->activateChild(ID);
             return false;
         }
+
+        inline static uint8_t ID;
+    private:
+
 };
 
 struct DeleteOperation{
@@ -195,7 +210,6 @@ struct Leafnode{
         // Supported operations
         using validOperations = TypeList<ReadOperation,
                                          WriteOperation,
-                                         CreateOperation,
                                          DeleteOperation>;
     
     public:
@@ -225,13 +239,6 @@ struct Node{
 
     private:
         // Helpers for internal usage
-        template<uint8_t queriedID, class T> struct id2idx;
-
-        template<uint8_t queriedID, uint8_t ID, NodeLike... N>
-        struct id2idx<queriedID, NodeHeaderImpl<ID,N...>> {
-            static constexpr uint8_t getIndex();
-        };
-
         template <typename T> struct getChildrenTypes{};
 
         template<uint8_t ID, NodeLike... N>
@@ -255,15 +262,9 @@ struct Node{
             }
         };
 
-        template<class... Ts>
-        struct overloaded : Ts... {
-            using Ts::operator()...;
-        };
-
         // Supported operations
         using validOperations = TypeList<GetIDsOperation,
-                                         CreateOperation,
-                                         DeleteOperation>;
+                                         CreateOperation>;
 
         // Member variables
         getChildrenTypes<H>::types children;
@@ -323,6 +324,21 @@ struct Node{
             }
             
             return true;
+        }
+
+        bool activateChild(const uint8_t ID){
+            bool error = true;
+            auto nodeSwitch = overloaded {
+                [&]<LeafnodeConcept L>(L& l) {},
+                [&]<NodeConcept K>(K& k){
+                    if(k.header.ID == ID) k.header.active =true;
+                    error = false;
+                },
+            };
+
+            // Apply switch
+            std::apply([&](auto&... child){ (nodeSwitch(child), ...);}, children);
+            return error;
         }
 
         std::span<const uint8_t> getChildrenIDs() const {
