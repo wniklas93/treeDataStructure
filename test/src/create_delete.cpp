@@ -110,6 +110,7 @@ int main ()
         
         // Test setupt
         AsymetricTree t_asym;
+        SimpleTree* t_simple = t_asym.getChild<SimpleTree>(0);
 
         uint8_t ID0 = 0; uint8_t ID1 = 1; uint8_t ID2 = 2;      
         expect(t_asym.traverse<ReadOperation>(0,0)               == 1_i);        // Must return error (1), as leafnode hasn't been activated yet
@@ -149,6 +150,7 @@ int main ()
         CreateOperation::ID = 0;
         expect(t_asym.traverse<CreateOperation>(0)               == 0_i);        // Must return no error (0), as leafnode does exist
         DeleteOperation::ID = 0;
+        expect(t_simple->header.activeChildren                   == 1_i);        // Inner node has got one active child
         expect(t_asym.traverse<DeleteOperation>()                == 1_i);        // Must return an error (1), as node still got some active children
         CreateOperation::ID = 1;
         expect(t_asym.traverse<CreateOperation>(0)               == 0_i);        // Must return no error (0), as leafnode does exist

@@ -52,6 +52,9 @@ namespace archetypes{
 
         R* getChildren(){R* r;return r;}
 
+        template<class N>
+        N* getChild(const uint8_t& ID){N* n; return n;}
+
 
         NodeHeader header;
         R data;
@@ -75,6 +78,7 @@ concept LeafnodeConcept = requires (T t) {
 template<class T>
 concept NodeConcept = requires (T t, uint8_t ID){
                             t.header;
+                            {t.template getChild<archetypes::NodeLike>(ID)};
                             {t.getChildren()};
                             {t.getChildrenIDs()} -> std::same_as<std::span<const uint8_t>>;
                             {t.template accept<archetypes::Visitor>()} -> std::same_as<bool>;
@@ -364,6 +368,22 @@ struct Node{
 
         getChildrenTypes<H>::types* getChildren(){
             return &children;
+        }
+
+        template<NodeLike N>
+        N* getChild(const uint8_t& queriedID){
+            N* n;
+            auto nodeSwitch = overloaded {
+                [&]<NodeLike M>(M& m) {
+                    if constexpr (std::is_same_v<N,M>){
+                        n = &m;
+                    }
+                },
+            };
+
+            // Apply switch
+            std::apply([&](auto&... child){ (nodeSwitch(child), ...);}, children);
+            return n;
         }
 
         std::span<const uint8_t> getChildrenIDs() const {
