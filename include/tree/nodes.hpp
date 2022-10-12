@@ -30,8 +30,6 @@ namespace archetypes{
 
         static constexpr uint8_t ID{0};
 
-        static constexpr bool active = true;
-
         template<class V>
         static bool guard(uint8_t ID){return true;}; 
     };
@@ -50,9 +48,10 @@ namespace archetypes{
 
         std::span<const uint8_t> getChildrenIDs() const {return std::span<uint8_t>{};};
 
-        bool activeChild(const uint8_t& ID){return true;}
-
         struct R {};
+
+        R* getChildren(){R* r;return r;}
+
 
         NodeHeader header;
         R data;
@@ -62,7 +61,6 @@ namespace archetypes{
 template<class T>
 concept NodeHeader = requires (uint8_t ID, T t){
     {T::ID} -> std::convertible_to<uint8_t>;
-    {T::active} -> std::convertible_to<uint8_t>;
     {t.template guard<archetypes::Visitor>(ID)} -> std::same_as<bool>;
 };
 
@@ -77,8 +75,8 @@ concept LeafnodeConcept = requires (T t) {
 template<class T>
 concept NodeConcept = requires (T t, uint8_t ID){
                             t.header;
+                            {t.getChildren()};
                             {t.getChildrenIDs()} -> std::same_as<std::span<const uint8_t>>;
-                            {t.activateChild(ID)} -> std::same_as<bool>;
                             {t.template accept<archetypes::Visitor>()} -> std::same_as<bool>;
                             {t.template traverse<archetypes::Visitor>(ID)} -> std::same_as<bool>;
 };
@@ -156,25 +154,63 @@ struct GetIDsOperation{
 struct CreateOperation{
     public:
 
-        template<NodeLike N>
+        template<NodeConcept N>
         static bool visit(N* n){
-            n->activateChild(ID);
-            return false;
+            bool error = true;
+            
+            auto nodeSwitch = overloaded {
+                [&]<NodeLike L>(L& l) {
+                  if(l.header.ID == ID){
+                    error = false;
+                    n->header.activeChildren += l.header.active != true;
+                    l.header.active = true;
+                  }  
+                },
+            };
+
+            // Apply switch
+            std::apply([&](auto&... child){ (nodeSwitch(child), ...);}, *n->getChildren());
+
+
+
+            return error;
         }
 
-        inline static uint8_t ID;
-    private:
-
+        inline static uint8_t ID = 0;
 };
 
 struct DeleteOperation{
     public:
         
-        template<NodeLike N>
+        template<NodeConcept N>
         static bool visit(N* n){
-            n->header.active = false;
-            return false;
+            bool error = true;
+
+            auto nodeSwitch = overloaded {
+                [&]<NodeConcept K>(K& k) {
+                  if((k.header.ID == ID) && (k.header.activeChildren == 0)){
+                    error = false;
+                    n->header.activeChildren -= k.header.active == true;
+                    k.header.active = false;
+                  }  
+                },
+                [&]<LeafnodeConcept L>(L& l){
+                    if(l.header.ID == ID){
+                        error = false;
+                        n->header.activeChildren -= l.header.active == true;
+                        l.header.active = false;
+                    }
+                }
+            };
+
+            // Apply switch
+            std::apply([&](auto&... child){ (nodeSwitch(child), ...);}, *n->getChildren());
+
+
+            return error;
         }
+
+        inline static uint8_t ID = 0;
 };
 
 // Data structure
@@ -209,8 +245,7 @@ struct Leafnode{
 
         // Supported operations
         using validOperations = TypeList<ReadOperation,
-                                         WriteOperation,
-                                         DeleteOperation>;
+                                         WriteOperation>;
     
     public:
         // Member variables
@@ -264,7 +299,8 @@ struct Node{
 
         // Supported operations
         using validOperations = TypeList<GetIDsOperation,
-                                         CreateOperation>;
+                                         CreateOperation,
+                                         DeleteOperation>;
 
         // Member variables
         getChildrenTypes<H>::types children;
@@ -326,19 +362,8 @@ struct Node{
             return true;
         }
 
-        bool activateChild(const uint8_t ID){
-            bool error = true;
-            auto nodeSwitch = overloaded {
-                [&]<LeafnodeConcept L>(L& l) {},
-                [&]<NodeConcept K>(K& k){
-                    if(k.header.ID == ID) k.header.active =true;
-                    error = false;
-                },
-            };
-
-            // Apply switch
-            std::apply([&](auto&... child){ (nodeSwitch(child), ...);}, children);
-            return error;
+        getChildrenTypes<H>::types* getChildren(){
+            return &children;
         }
 
         std::span<const uint8_t> getChildrenIDs() const {
