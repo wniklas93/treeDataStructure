@@ -7,6 +7,7 @@
 #include <algorithm>
 #include <span>
 #include <any>
+#include <iostream>
 
 // Data structure interface
 // Todo: Code revision of concepts/interface
@@ -93,6 +94,7 @@ concept Visitor = requires (T t, archetypes::NodeLike* n){
     
 };
 
+
 static_assert(NodeHeader<archetypes::NodeHeader>);
 static_assert(Visitor<archetypes::Visitor>);
 static_assert(NodeLike<archetypes::NodeLike>);
@@ -102,6 +104,26 @@ static_assert(NodeLike<archetypes::NodeLike>);
 template<class... Ts>
 struct overloaded : Ts... {
     using Ts::operator()...;
+};
+
+
+struct DecodeOperation{
+    public:
+        template<LeafnodeConcept L>
+        static bool visit(L* l){
+            std::cout << "Hello" << std::endl;
+            typeSwitch(l->data);
+        return false;
+        }
+    private:
+        static constexpr auto typeSwitch = overloaded {
+            [](float& f) {std::cout << "float " << f << std::endl;},
+            [](int& i) {std::cout << "int " << i << std::endl;},
+            [](double& d) {std::cout << "double " << d << std::endl;},
+            [](char& c) {std::cout << "char " << c << std::endl;},
+            [](auto& c) {},
+            };
+
 };
 
 struct ReadOperation{
@@ -248,7 +270,8 @@ struct Leafnode{
 
         // Supported operations
         using validOperations = TypeList<ReadOperation,
-                                         WriteOperation>;
+                                         WriteOperation,
+                                         DecodeOperation>;
     
     public:
         // Member variables
