@@ -6,7 +6,6 @@ template<uint8_t I,NodeLike... N>
 struct NodeHeaderImpl{
     static constexpr uint8_t ID = I;
 
-    template<Visitor Vi>
     bool guard(const uint8_t& queryID){
       return queryID == ID ? true : false;
     }
@@ -19,7 +18,7 @@ struct NodeHeaderImpl{
 template<uint8_t I, auto V, class T>
 struct LeafnodeHeaderImpl{
     static constexpr uint8_t ID = I;
-    template<Visitor Vi>
+
     bool guard(const uint8_t& queryID){
       return queryID == ID ? true : false;
     }

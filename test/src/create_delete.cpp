@@ -12,7 +12,6 @@ struct NodeHeaderImpl{
     bool active = false;
     uint8_t activeChildren = 0;
 
-    template<Visitor Vi>
     bool guard(const uint8_t& queryID){
         return (queryID == ID) && (active == true) ? true : false;
     }
@@ -26,7 +25,6 @@ struct LeafnodeHeaderImpl{
 
     bool active = false;
 
-    template<Visitor Vi>
     bool guard(const uint8_t& queryID){
         return (queryID == ID) && (active == true) ? true : false;
     }

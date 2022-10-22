@@ -30,7 +30,6 @@ namespace archetypes{
 
         static constexpr uint8_t ID{0};
 
-        template<class V>
         static bool guard(uint8_t ID){return true;}; 
     };
 
@@ -64,7 +63,7 @@ namespace archetypes{
 template<class T>
 concept NodeHeader = requires (uint8_t ID, T t){
     {T::ID} -> std::convertible_to<uint8_t>;
-    {t.template guard<archetypes::Visitor>(ID)} -> std::same_as<bool>;
+    {t.template guard(ID)} -> std::same_as<bool>;
 };
 
 
@@ -324,17 +323,17 @@ struct Node{
                     
                     if constexpr (sizeof... (residualIDs) == 0)
                     {
-                        if(l.header.template guard<V>(ID)) error = l.template accept<V>();
+                        if(l.header.template guard(ID)) error = l.template accept<V>();
                     }
                 },
                 [&]<NodeConcept K>(K& k){
                     
                     if constexpr (sizeof... (residualIDs) > 0)
                     {
-                        k.header.template guard<V>(ID) ? (error = k.template traverse<V>(residualIDs...),
+                        k.header.template guard(ID) ? (error = k.template traverse<V>(residualIDs...),
                         false) : false;
                     } else {
-                        k.header.template guard<V>(ID) ? error = k.template accept<V>() : false;
+                        k.header.template guard(ID) ? error = k.template accept<V>() : false;
                     }
                 },
             };
@@ -350,7 +349,7 @@ struct Node{
         bool traverse(){
             bool error = true;
             
-            header.template guard<V>(header.ID) ? error = accept<V>() : false;
+            header.template guard(header.ID) ? error = accept<V>() : false;
 
             return error;
         }
