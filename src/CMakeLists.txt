@@ -14,6 +14,6 @@ set(NODES_SOURCES
 
 add_library(libNodesCpp ${NODES_SOURCES})
 
-target_include_directories(libNodesCpp PUBLIC ../include/tree)
+target_include_directories(libNodesCpp PUBLIC ../include)
 
 target_compile_features(libNodesCpp PUBLIC cxx_std_20)
