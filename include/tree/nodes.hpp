@@ -20,7 +20,7 @@ namespace archetypes{
         ~Visitor() = delete;
 
         template<class N>
-        static bool visit(N* n){return true;};
+        static bool visitNode(N* n){return true;};
     };
 
     struct NodeHeader{
@@ -89,10 +89,18 @@ template<class T>
 concept NodeLike = LeafnodeConcept<T> || NodeConcept<T>;
 
 template<class T>
-concept Visitor = requires (T t, archetypes::NodeLike* n){
-    {t.visit(n)} -> std::same_as<bool>;
-    
+concept LeafnodeVisitor = requires(T t, archetypes::NodeLike* n){
+    {t.visitLeafnode(n)} -> std::same_as<bool>;
 };
+
+template<class T>
+concept NodeVisitor = requires(T t, archetypes::NodeLike* n){
+    {t.visitNode(n)} -> std::same_as<bool>;
+};
+
+template<class T>
+concept Visitor = LeafnodeVisitor<T> || NodeVisitor<T>;
+
 
 
 static_assert(NodeHeader<archetypes::NodeHeader>);
@@ -125,42 +133,6 @@ struct DecodeOperation{
             };
 };
 
-struct ReadOperation{
-    public:
-
-        template<LeafnodeConcept L>
-        static bool visit(L* l){
-            value = l->data;
-        return false;
-        }
-
-        template<class T>
-        static const T getValue(){
-            return std::any_cast<T>(value);
-        }
-
-    private:
-        inline static std::any value = nullptr;
-};
-
-struct WriteOperation{
-    public:
-
-        template<LeafnodeConcept L>
-        static bool visit(L* l){
-            l->data = std::any_cast<decltype(l->data)>(value);
-        return false;
-        }
-
-        template<class T>
-        static void setValue(const T& v){
-            value = v;
-            
-        }
-
-    private:
-        inline static std::any value = nullptr;
-};
 
 struct GetIDsOperation{
     public:
@@ -266,11 +238,6 @@ struct Leafnode{
                 return T(V);
             }
         };
-
-        // Supported operations
-        using validOperations = TypeList<ReadOperation,
-                                         WriteOperation,
-                                         DecodeOperation>;
     
     public:
         // Member variables
@@ -279,9 +246,9 @@ struct Leafnode{
 
         template<Visitor V>
         bool accept() {
-            if constexpr (inTypeList<V,validOperations>::value){
+            if(LeafnodeVisitor<V>){
                 using L = std::remove_pointer_t<decltype(this)>;
-                return V::template visit<L>(this);
+                return V::template visitLeafnode<L>(this);
             }
             return true;
         }

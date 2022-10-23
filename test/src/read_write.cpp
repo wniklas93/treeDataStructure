@@ -15,9 +15,6 @@ struct NodeHeaderImpl{
       return queryID == ID ? true : false;
     }
 
-    // static constexpr auto guard = []<Visitor Vi>(const uint8_t& queryID){
-    //     return queryID == ID ? true : false; 
-    // };
 };
 
 template<uint8_t I, auto V, class T>
@@ -27,9 +24,44 @@ struct LeafnodeHeaderImpl{
     bool guard(const uint8_t& queryID){
       return queryID == ID ? true : false;
     }
-    //static constexpr auto guard = []<Visitor Vi>(const uint8_t& queryID){
-    //    return queryID == ID ? true : false; 
-    //};
+
+};
+
+struct ReadOperation{
+    public:
+
+        template<LeafnodeConcept L>
+        static bool visitLeafnode(L* l){
+            value = l->data;
+        return false;
+        }
+
+        template<class T>
+        static const T getValue(){
+            return std::any_cast<T>(value);
+        }
+
+    private:
+        inline static std::any value = nullptr;
+};
+
+struct WriteOperation{
+    public:
+
+        template<LeafnodeConcept L>
+        static bool visitLeafnode(L* l){
+            l->data = std::any_cast<decltype(l->data)>(value);
+        return false;
+        }
+
+        template<class T>
+        static void setValue(const T& v){
+            value = v;
+            
+        }
+
+    private:
+        inline static std::any value = nullptr;
 };
 
 struct Mock {
@@ -157,8 +189,8 @@ int main() {
     expect(ReadOperation::getValue<std::function<int()>>()()                      == 3_i);
  };
 
-    // Test asymetric tree (Tree with leafnodes in different layers)
-    AsymetricTree t_asym;
+  // Test asymetric tree (Tree with leafnodes in different layers)
+  AsymetricTree t_asym;
   "read_exist_asym_tree"_test = [&] {
     expect(t_asym.traverse<ReadOperation>(0,10)                     == 1_i);        // Must return an error (1), as leafnode does not exist
     expect(t_asym.traverse<ReadOperation>(0,11)                     == 1_i);        // Must return an error (1), as leafnode does not exist
