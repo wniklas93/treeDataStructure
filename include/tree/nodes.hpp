@@ -101,8 +101,6 @@ concept NodeVisitor = requires(T t, archetypes::NodeLike* n){
 template<class T>
 concept Visitor = LeafnodeVisitor<T> || NodeVisitor<T>;
 
-
-
 static_assert(NodeHeader<archetypes::NodeHeader>);
 static_assert(Visitor<archetypes::Visitor>);
 static_assert(NodeLike<archetypes::NodeLike>);
@@ -115,112 +113,25 @@ struct overloaded : Ts... {
 };
 
 
-struct DecodeOperation{
-    public:
-        template<LeafnodeConcept L>
-        static bool visit(L* l){
-            std::cout << "Hello" << std::endl;
-            typeSwitch(l->data);
-        return false;
-        }
-    private:
-        static constexpr auto typeSwitch = overloaded {
-            [](float& f) {std::cout << "float " << f << std::endl;},
-            [](int& i) {std::cout << "int " << i << std::endl;},
-            [](double& d) {std::cout << "double " << d << std::endl;},
-            [](char& c) {std::cout << "char " << c << std::endl;},
-            [](auto& c) {},
-            };
-};
-
-
-struct GetIDsOperation{
-    public:
-        
-        template<NodeConcept N>
-        static bool visit(N* n){
-            value = n->getChildrenIDs();
-            
-            return false;
-        }
-        
-        inline static std::span<const uint8_t> value;
-};
-
-struct CreateOperation{
-    public:
-
-        template<NodeConcept N>
-        static bool visit(N* n){
-            bool error = true;
-            
-            auto nodeSwitch = overloaded {
-                [&]<NodeLike L>(L& l) {
-                  if(l.header.ID == ID){
-                    error = false;
-                    n->header.activeChildren += l.header.active != true;
-                    l.header.active = true;
-                  }  
-                },
-            };
-
-            // Apply switch
-            std::apply([&](auto&... child){ (nodeSwitch(child), ...);}, *n->getChildren());
-
-
-
-            return error;
-        }
-
-        inline static uint8_t ID = 0;
-};
-
-struct DeleteOperation{
-    public:
-        
-        template<NodeConcept N>
-        static bool visit(N* n){
-            bool error = true;
-
-            auto nodeSwitch = overloaded {
-                [&]<NodeConcept K>(K& k) {
-                  if((k.header.ID == ID) && (k.header.activeChildren == 0)){
-                    error = false;
-                    n->header.activeChildren -= k.header.active == true;
-                    k.header.active = false;
-                  }  
-                },
-                [&]<LeafnodeConcept L>(L& l){
-                    if(l.header.ID == ID){
-                        error = false;
-                        n->header.activeChildren -= l.header.active == true;
-                        l.header.active = false;
-                    }
-                }
-            };
-
-            // Apply switch
-            std::apply([&](auto&... child){ (nodeSwitch(child), ...);}, *n->getChildren());
-
-
-            return error;
-        }
-
-        inline static uint8_t ID = 0;
-};
+// struct DecodeOperation{
+//     public:
+//         template<LeafnodeConcept L>
+//         static bool visit(L* l){
+//             std::cout << "Hello" << std::endl;
+//             typeSwitch(l->data);
+//         return false;
+//         }
+//     private:
+//         static constexpr auto typeSwitch = overloaded {
+//             [](float& f) {std::cout << "float " << f << std::endl;},
+//             [](int& i) {std::cout << "int " << i << std::endl;},
+//             [](double& d) {std::cout << "double " << d << std::endl;},
+//             [](char& c) {std::cout << "char " << c << std::endl;},
+//             [](auto& c) {},
+//             };
+// };
 
 // Data structure
-template<class... Ts>
-struct TypeList{};
-
-template<class T, class... Ts>
-struct inTypeList;
-
-template<class T, class... Ts>
-struct inTypeList<T,TypeList<Ts...>>{
-    static constexpr bool value = (std::is_same_v<T,Ts> || ...);
-};
-
 template<uint8_t I, auto V, class T>
 struct LeafnodeHeaderImpl;
 
@@ -246,7 +157,7 @@ struct Leafnode{
 
         template<Visitor V>
         bool accept() {
-            if(LeafnodeVisitor<V>){
+            if constexpr (LeafnodeVisitor<V>){
                 using L = std::remove_pointer_t<decltype(this)>;
                 return V::template visitLeafnode<L>(this);
             }
@@ -288,11 +199,6 @@ struct Node{
                 } ();
             }
         };
-
-        // Supported operations
-        using validOperations = TypeList<GetIDsOperation,
-                                         CreateOperation,
-                                         DeleteOperation>;
 
         // Member variables
         getChildrenTypes<H>::types children;
@@ -346,9 +252,9 @@ struct Node{
         template<Visitor V>
         bool accept(){
             
-            if constexpr(inTypeList<V,validOperations>::value){
+            if constexpr(NodeVisitor<V>){
                 using N = std::remove_pointer_t<decltype(this)>;
-                return V::template visit<N>(this);
+                return V::template visitNode<N>(this);
             }
             
             return true;

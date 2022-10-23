@@ -31,6 +31,105 @@ struct LeafnodeHeaderImpl{
 
 };
 
+struct CreateOperation{
+    public:
+
+        template<NodeConcept N>
+        static bool visitNode(N* n){
+            bool error = true;
+            
+            auto nodeSwitch = overloaded {
+                [&]<NodeLike L>(L& l) {
+                  if(l.header.ID == ID){
+                    error = false;
+                    n->header.activeChildren += l.header.active != true;
+                    l.header.active = true;
+                  }  
+                },
+            };
+
+            // Apply switch
+            std::apply([&](auto&... child){ (nodeSwitch(child), ...);}, *n->getChildren());
+
+
+
+            return error;
+        }
+
+        inline static uint8_t ID = 0;
+};
+
+struct DeleteOperation{
+    public:
+        
+        template<NodeConcept N>
+        static bool visitNode(N* n){
+            bool error = true;
+
+            auto nodeSwitch = overloaded {
+                [&]<NodeConcept K>(K& k) {
+                  if((k.header.ID == ID) && (k.header.activeChildren == 0)){
+                    error = false;
+                    n->header.activeChildren -= k.header.active == true;
+                    k.header.active = false;
+                  }  
+                },
+                [&]<LeafnodeConcept L>(L& l){
+                    if(l.header.ID == ID){
+                        error = false;
+                        n->header.activeChildren -= l.header.active == true;
+                        l.header.active = false;
+                    }
+                }
+            };
+
+            // Apply switch
+            std::apply([&](auto&... child){ (nodeSwitch(child), ...);}, *n->getChildren());
+
+
+            return error;
+        }
+
+        inline static uint8_t ID = 0;
+};
+
+struct ReadOperation{
+    public:
+
+        template<LeafnodeConcept L>
+        static bool visitLeafnode(L* l){
+            value = l->data;
+        return false;
+        }
+
+        template<class T>
+        static const T getValue(){
+            return std::any_cast<T>(value);
+        }
+
+    private:
+        inline static std::any value = nullptr;
+};
+
+struct WriteOperation{
+    public:
+
+        template<LeafnodeConcept L>
+        static bool visitLeafnode(L* l){
+            l->data = std::any_cast<decltype(l->data)>(value);
+        return false;
+        }
+
+        template<class T>
+        static void setValue(const T& v){
+            value = v;
+            
+        }
+
+    private:
+        inline static std::any value = nullptr;
+};
+
 using SimpleTree = Node<
                     NodeHeaderImpl<
                         0,

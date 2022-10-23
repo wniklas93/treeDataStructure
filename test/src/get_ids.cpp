@@ -9,10 +9,6 @@ struct NodeHeaderImpl{
     bool guard(const uint8_t& queryID){
       return queryID == ID ? true : false;
     }
-
-    // static constexpr auto guard = []<Visitor Vi>(const uint8_t& queryID){
-    //     return queryID == ID ? true : false; 
-    // };
 };
 
 template<uint8_t I, auto V, class T>
@@ -22,9 +18,19 @@ struct LeafnodeHeaderImpl{
     bool guard(const uint8_t& queryID){
       return queryID == ID ? true : false;
     }
-    //static constexpr auto guard = []<Visitor Vi>(const uint8_t& queryID){
-    //    return queryID == ID ? true : false; 
-    //};
+};
+
+struct GetIDsOperation{
+    public:
+        
+        template<NodeConcept N>
+        static bool visitNode(N* n){
+            value = n->getChildrenIDs();
+            
+            return false;
+        }
+        
+        inline static std::span<const uint8_t> value;
 };
 
 using SimpleTree = Node<

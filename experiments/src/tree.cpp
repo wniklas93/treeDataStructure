@@ -51,6 +51,6 @@ int main() {
     SimpleTree t_simple;
     AsymetricTree t_asym;
 
-    t_simple.traverse<DecodeOperation>(0);
+    //t_simple.traverse<DecodeOperation>(0);
   
 }
