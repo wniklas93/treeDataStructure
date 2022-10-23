@@ -123,7 +123,6 @@ struct DecodeOperation{
             [](char& c) {std::cout << "char " << c << std::endl;},
             [](auto& c) {},
             };
-
 };
 
 struct ReadOperation{
