@@ -177,17 +177,11 @@ struct Node{
 
     private:
         // Helpers for internal usage
-        template <typename T> struct getChildrenTypes{};
+        template <typename T> struct Children{};
 
-        template<uint8_t ID, NodeLike... N>
-        struct getChildrenTypes<NodeHeaderImpl<ID,N...>>{
+        template<uint8_t I, NodeLike... N>
+        struct Children<NodeHeaderImpl<I,N...>>{
             using types = std::tuple<N...>;
-        };
-
-        template <typename T> struct ChildrenIDs{};
-
-        template<uint8_t ID, NodeLike... N>
-        struct ChildrenIDs<NodeHeaderImpl<ID,N...>>{
             static constexpr std::array<uint8_t, sizeof...(N)> value = {(N::getID())...};
 
             // Check for duplicates in ID-array
@@ -198,13 +192,22 @@ struct Node{
                     return (std::unique(childIDs.begin(),childIDs.end()) == childIDs.end());
                 } ();
             }
+
+            static constexpr uint8_t id2idx(const uint8_t& queriedID){
+                uint8_t idx = 0;
+                for(const uint8_t& ID : value){
+                    if(ID==queriedID) return idx;
+                    idx++;
+                }
+                return idx;
+            }
         };
 
         // Member variables
-        getChildrenTypes<H>::types children;
+        Children<H>::types children;
 
         // Check for unique children IDs
-        static_assert(ChildrenIDs<H>::uniqueIDs() == true, 
+        static_assert(Children<H>::uniqueIDs() == true, 
                     "Children IDs must be unique!");
         
     public:
@@ -260,7 +263,7 @@ struct Node{
             return true;
         }
 
-        getChildrenTypes<H>::types* getChildren(){
+        Children<H>::types* getChildren(){
             return &children;
         }
 
@@ -281,8 +284,8 @@ struct Node{
         }
 
         std::span<const uint8_t> getChildrenIDs() const {
-            return std::span(ChildrenIDs<H>::value.begin(), 
-                             ChildrenIDs<H>::value.end());
+            return std::span(Children<H>::value.begin(), 
+                             Children<H>::value.end());
         }
 
        static constexpr uint8_t getID() {
