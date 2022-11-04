@@ -55,6 +55,10 @@ namespace archetypes{
         template<class N>
         N* getChild(const uint8_t& ID){N* n; return n;}
 
+        static constexpr uint8_t getID(){ return 0;}
+
+        static constexpr uint16_t getNumLeafnodes() {return 0;}
+
         NodeHeader header;
         R data;
     };
@@ -72,11 +76,14 @@ concept LeafnodeConcept = requires (T t) {
                             {t.data}; //-> std::convertible_to<std::semiregular>;
                             {t.template accept<archetypes::Visitor>()} -> std::same_as<bool>;
                             t.header;
+                            {T::getID()} -> std::same_as<uint8_t>;
 };
 
 template<class T>
 concept NodeConcept = requires (T t, uint8_t ID){
                             t.header;
+                            {T::getID()} -> std::same_as<uint8_t>;
+                            {T::getNumLeafnodes()} -> std::same_as<uint16_t>;
                             {t.template getChild<archetypes::NodeLike>(ID)};
                             {t.getChildren()};
                             {t.getChildrenIDs()} -> std::same_as<std::span<const uint8_t>>;
