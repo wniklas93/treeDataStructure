@@ -55,7 +55,6 @@ namespace archetypes{
         template<class N>
         N* getChild(const uint8_t& ID){N* n; return n;}
 
-
         NodeHeader header;
         R data;
     };
@@ -112,24 +111,6 @@ struct overloaded : Ts... {
     using Ts::operator()...;
 };
 
-
-// struct DecodeOperation{
-//     public:
-//         template<LeafnodeConcept L>
-//         static bool visit(L* l){
-//             std::cout << "Hello" << std::endl;
-//             typeSwitch(l->data);
-//         return false;
-//         }
-//     private:
-//         static constexpr auto typeSwitch = overloaded {
-//             [](float& f) {std::cout << "float " << f << std::endl;},
-//             [](int& i) {std::cout << "int " << i << std::endl;},
-//             [](double& d) {std::cout << "double " << d << std::endl;},
-//             [](char& c) {std::cout << "char " << c << std::endl;},
-//             [](auto& c) {},
-//             };
-// };
 
 // Data structure
 template<uint8_t I, auto V, class T>
@@ -193,6 +174,17 @@ struct Node{
                 } ();
             }
 
+
+            static constexpr auto getNumLeafnodes = [](){
+                return (... + [](){
+                    if constexpr(NodeConcept<N>){
+                        return N::getNumLeafnodes();
+                    }else{
+                        return 1;
+                    }
+                }());
+            };
+
             static constexpr uint8_t id2idx(const uint8_t& queriedID){
                 uint8_t idx = 0;
                 for(const uint8_t& ID : value){
@@ -211,6 +203,10 @@ struct Node{
                     "Children IDs must be unique!");
         
     public:
+
+        static constexpr uint16_t getNumLeafnodes(){
+            return Children<H>::getNumLeafnodes();
+        }
 
         template<Visitor V, std::convertible_to<uint8_t>... Is>
         bool traverse(const uint8_t& ID, const Is&... residualIDs){

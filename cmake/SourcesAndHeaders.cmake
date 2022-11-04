@@ -15,6 +15,7 @@ set(test_sources
   src/read_write.cpp
   src/get_ids.cpp
   src/create_delete.cpp
+  src/numleafnodes.cpp
 )
 
 set(experiments_sources
