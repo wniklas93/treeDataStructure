@@ -30,7 +30,7 @@ struct GetIDsOperation{
             return false;
         }
 
-        template<NodeConcept N>
+        template<NodeLike N>
         static bool previsit(N* n){
           return true;
         }        

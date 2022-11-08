@@ -56,7 +56,7 @@ struct CreateOperation{
             return error;
         }
 
-        template<NodeConcept N>
+        template<NodeLike N>
         static bool previsit(N* n){
           return true;
         }        
@@ -95,7 +95,7 @@ struct DeleteOperation{
             return error;
         }
 
-        template<NodeConcept N>
+        template<NodeLike N>
         static bool previsit(N* n){
           return true;
         }
@@ -117,7 +117,7 @@ struct ReadOperation{
             return std::any_cast<T>(value);
         }
 
-        template<NodeConcept N>
+        template<NodeLike N>
         static bool previsit(N* n){
           return true;
         }        
@@ -141,7 +141,7 @@ struct WriteOperation{
             
         }
 
-        template<NodeConcept N>
+        template<NodeLike N>
         static bool previsit(N* n){
           return true;
         }

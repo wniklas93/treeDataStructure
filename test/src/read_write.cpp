@@ -41,7 +41,7 @@ struct ReadOperation{
             return std::any_cast<T>(value);
         }
 
-        template<NodeConcept N>
+        template<NodeLike N>
         static bool previsit(N* n){
           return true;
         }
@@ -59,7 +59,7 @@ struct WriteOperation{
         return false;
         }
 
-        template<NodeConcept N>
+        template<NodeLike N>
         static bool previsit(N* n){
           return true;
         }
