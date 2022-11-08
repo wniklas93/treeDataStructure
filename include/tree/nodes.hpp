@@ -228,7 +228,10 @@ struct Node{
                     
                     if constexpr (sizeof... (residualIDs) == 0)
                     {
-                        if(l.header.template guard(ID)) error = l.template accept<V>();
+                        if(l.header.template guard(ID)){
+                            V::template previsit<L>(&l);
+                            error = l.template accept<V>();
+                        }
                     }
                 },
                 [&]<NodeConcept K>(K& k){
