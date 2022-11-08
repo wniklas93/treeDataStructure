@@ -20,7 +20,10 @@ namespace archetypes{
         ~Visitor() = delete;
 
         template<class N>
-        static bool visitNode(N* n){return true;};
+        static bool visitNode(N* n){return true;}
+
+        template<class N>
+        static bool previsit(N* n){return true;}
     };
 
     struct NodeHeader{
@@ -102,6 +105,7 @@ concept LeafnodeVisitor = requires(T t, archetypes::NodeLike* n){
 template<class T>
 concept NodeVisitor = requires(T t, archetypes::NodeLike* n){
     {t.visitNode(n)} -> std::same_as<bool>;
+    {t.previsit(n)} -> std::same_as<bool>;
 };
 
 template<class T>
@@ -231,7 +235,9 @@ struct Node{
                     
                     if constexpr (sizeof... (residualIDs) > 0)
                     {
-                        k.header.template guard(ID) ? (error = k.template traverse<V>(residualIDs...),
+                        k.header.template guard(ID) ? (
+                            V::template previsit<K>(&k),
+                            error = k.template traverse<V>(residualIDs...),
                         false) : false;
                     } else {
                         k.header.template guard(ID) ? error = k.template accept<V>() : false;

@@ -56,6 +56,11 @@ struct CreateOperation{
             return error;
         }
 
+        template<NodeConcept N>
+        static bool previsit(N* n){
+          return true;
+        }        
+
         inline static uint8_t ID = 0;
 };
 
@@ -90,6 +95,11 @@ struct DeleteOperation{
             return error;
         }
 
+        template<NodeConcept N>
+        static bool previsit(N* n){
+          return true;
+        }
+
         inline static uint8_t ID = 0;
 };
 
@@ -106,6 +116,11 @@ struct ReadOperation{
         static const T getValue(){
             return std::any_cast<T>(value);
         }
+
+        template<NodeConcept N>
+        static bool previsit(N* n){
+          return true;
+        }        
 
     private:
         inline static std::any value = nullptr;
@@ -124,6 +139,11 @@ struct WriteOperation{
         static void setValue(const T& v){
             value = v;
             
+        }
+
+        template<NodeConcept N>
+        static bool previsit(N* n){
+          return true;
         }
 
     private:

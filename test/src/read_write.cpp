@@ -41,6 +41,11 @@ struct ReadOperation{
             return std::any_cast<T>(value);
         }
 
+        template<NodeConcept N>
+        static bool previsit(N* n){
+          return true;
+        }
+
     private:
         inline static std::any value = nullptr;
 };
@@ -52,6 +57,11 @@ struct WriteOperation{
         static bool visitLeafnode(L* l){
             l->data = std::any_cast<decltype(l->data)>(value);
         return false;
+        }
+
+        template<NodeConcept N>
+        static bool previsit(N* n){
+          return true;
         }
 
         template<class T>

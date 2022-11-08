@@ -29,6 +29,11 @@ struct GetIDsOperation{
             
             return false;
         }
+
+        template<NodeConcept N>
+        static bool previsit(N* n){
+          return true;
+        }        
         
         inline static std::span<const uint8_t> value;
 };
