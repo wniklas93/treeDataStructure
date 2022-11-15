@@ -9,6 +9,8 @@ struct NodeHeaderImpl{
 
     static constexpr uint8_t ID = I;
 
+    using childrenTypes = std::tuple<N...>;
+
     bool active = false;
     uint8_t activeChildren = 0;
 
