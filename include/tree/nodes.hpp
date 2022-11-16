@@ -169,9 +169,6 @@ struct Leafnode{
         }
 };
 
-template<uint8_t ID, NodeLike... N>
-struct NodeHeaderImpl;
-
 template<NodeHeaderConcept H>
 struct Node{
 
@@ -306,20 +303,37 @@ struct Node{
         H header;
 };
 
-template<uint8_t ID, template<uint8_t> class T, typename Seq>
+template<NodeLike... N>
+struct NodeList {};
+
+template<template<uint8_t> class T, typename Seq>
 struct expander;
 
-template<uint8_t ID, template<uint8_t> class T, std::size_t... Is>
-struct expander<ID, T, std::index_sequence<Is...>>{
+template<template<uint8_t> class T, std::size_t... Is>
+struct expander<T, std::index_sequence<Is...>>{
 
-    using type = Node<
-                        NodeHeaderImpl<ID,T<Is>...>
-                    >;
+    using type = NodeList<T<Is>...>;
 };
 
-template<uint8_t ID, template<uint8_t> class T, std::size_t N>
+template<template<NodeLike...> class H, template<uint8_t> class T, std::size_t N>
 struct nodeFactory {
-    using type = typename expander<ID, T,std::make_index_sequence<N>>::type;
+
+    // 1) Create node list
+    using nl = typename expander<T,std::make_index_sequence<N>>::type;
+
+    // 2) Create header
+    template<class NL>
+    struct Build{};
+
+    template<NodeLike... NL>
+    struct Build<NodeList<NL...>>{
+        using type = H<NL...>;
+    };
+
+    using header = Build<nl>::type;
+
+    // 3) Create node
+    using type = Node<header>;
 };
 
 #endif
