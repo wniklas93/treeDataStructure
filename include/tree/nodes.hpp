@@ -64,13 +64,21 @@ namespace archetypes{
 
         NodeHeader header;
         R data;
+        using childrenTypes = std::tuple<int,float>;
     };
 }
 
 template<class T>
-concept NodeHeader = requires (uint8_t ID, T t){
+concept LeafnodeHeaderConcept = requires (uint8_t ID, T t){
     {T::ID} -> std::convertible_to<uint8_t>;
     {t.template guard(ID)} -> std::same_as<bool>;
+};
+
+template<class T>
+concept NodeHeaderConcept = requires (uint8_t ID, T t){
+    {T::ID} -> std::convertible_to<uint8_t>;
+    {t.template guard(ID)} -> std::same_as<bool>;
+    typename T::childrenTypes;
 };
 
 
@@ -111,7 +119,7 @@ concept NodeVisitor = requires(T t, archetypes::NodeLike* n){
 template<class T>
 concept Visitor = LeafnodeVisitor<T> || NodeVisitor<T>;
 
-static_assert(NodeHeader<archetypes::NodeHeader>);
+//static_assert(NodeHeaderConcept<archetypes::NodeHeader>);
 static_assert(Visitor<archetypes::Visitor>);
 static_assert(NodeLike<archetypes::NodeLike>);
 
@@ -127,7 +135,7 @@ struct overloaded : Ts... {
 template<uint8_t I, auto V, class T>
 struct LeafnodeHeaderImpl;
 
-template<NodeHeader H>
+template<LeafnodeHeaderConcept H>
 struct Leafnode{
     private:
         // Helpers for internal usage
@@ -161,19 +169,17 @@ struct Leafnode{
         }
 };
 
-template<uint8_t ID, NodeLike... N>
-struct NodeHeaderImpl;
 
-template<NodeHeader H>
+template<NodeHeaderConcept H>
 struct Node{
 
     private:
         // Helpers for internal usage
         template <typename T> struct Children{};
 
-        template<uint8_t I, NodeLike... N>
-        struct Children<NodeHeaderImpl<I,N...>>{
-            using types = std::tuple<N...>;
+        template<NodeLike... N>
+        struct Children<std::tuple<N...>>{
+            
             static constexpr std::array<uint8_t, sizeof...(N)> value = {(N::getID())...};
 
             // Check for duplicates in ID-array
@@ -195,28 +201,19 @@ struct Node{
                     }
                 }());
             };
-
-            static constexpr uint8_t id2idx(const uint8_t& queriedID){
-                uint8_t idx = 0;
-                for(const uint8_t& ID : value){
-                    if(ID==queriedID) return idx;
-                    idx++;
-                }
-                return idx;
-            }
         };
 
         // Member variables
-        Children<H>::types children;
+        H::childrenTypes children;
 
         // Check for unique children IDs
-        static_assert(Children<H>::uniqueIDs() == true, 
+        static_assert(Children<typename H::childrenTypes>::uniqueIDs() == true, 
                     "Children IDs must be unique!");
         
     public:
 
         static constexpr uint16_t getNumLeafnodes(){
-            return Children<H>::getNumLeafnodes();
+            return Children<typename H::childrenTypes>::getNumLeafnodes();
         }
 
         template<Visitor V, std::convertible_to<uint8_t>... Is>
@@ -275,7 +272,7 @@ struct Node{
             return true;
         }
 
-        Children<H>::types* getChildren(){
+        H::childrenTypes* getChildren(){
             return &children;
         }
 
@@ -296,8 +293,8 @@ struct Node{
         }
 
         std::span<const uint8_t> getChildrenIDs() const {
-            return std::span(Children<H>::value.begin(), 
-                             Children<H>::value.end());
+            return std::span(Children<typename H::childrenTypes>::value.begin(), 
+                             Children<typename H::childrenTypes>::value.end());
         }
 
        static constexpr uint8_t getID() {
@@ -306,6 +303,9 @@ struct Node{
     
         H header;
 };
+
+template<uint8_t ID, NodeLike... N>
+struct NodeHeaderImpl;
 
 template<uint8_t ID, template<uint8_t> class T, typename Seq>
 struct expander;

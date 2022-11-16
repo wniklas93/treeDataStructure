@@ -7,9 +7,11 @@
 #include "tree/nodes.hpp"
 
 
-template<uint8_t I,NodeLike... N>
-struct NodeHeaderImpl{
+template<uint8_t I, bool B, NodeLike... N>
+struct NodeHeaderImpl_{
     static constexpr uint8_t ID = I;
+
+    using childrenTypes = std::tuple<N...>;
 
     bool guard(const uint8_t& queryID){
       return queryID == ID ? true : false;
@@ -97,8 +99,9 @@ int sumMock(int a, int b){
 }
 
 using SimpleTree = Node<
-                    NodeHeaderImpl<
+                    NodeHeaderImpl_<
                         0,
+                        true,
                         Leafnode<LeafnodeHeaderImpl<0,5,int>>,
                         Leafnode<LeafnodeHeaderImpl<1,5.5,double>>,
                         Leafnode<LeafnodeHeaderImpl<2,-4.5,float>>,
@@ -113,8 +116,9 @@ using SimpleTree = Node<
                   >;
 
 using AsymetricTree = Node<
-                        NodeHeaderImpl<
+                        NodeHeaderImpl_<
                             0,
+                            true,
                             SimpleTree,
                             Leafnode<LeafnodeHeaderImpl<1,2.5,double>>,
                             Leafnode<LeafnodeHeaderImpl<2,nullptr,int(*)(int,int)>>,

@@ -9,6 +9,8 @@ template<uint8_t I,NodeLike... N>
 struct NodeHeaderImpl{
     static constexpr uint8_t ID = I;
 
+    using childrenTypes = std::tuple<N...>;
+
     bool guard(const uint8_t& queryID){
       return queryID == ID ? true : false;
     }

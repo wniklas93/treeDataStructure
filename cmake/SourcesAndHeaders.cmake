@@ -16,10 +16,11 @@ set(test_sources
   src/get_ids.cpp
   src/create_delete.cpp
   src/numleafnodes.cpp
+  src/nodeFactory.cpp
 )
 
 set(experiments_sources
   src/tree.cpp
   src/memory_footprint.cpp
-  )
+)
 
