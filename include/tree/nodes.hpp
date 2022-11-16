@@ -35,6 +35,8 @@ namespace archetypes{
         static constexpr uint8_t ID{0};
 
         static bool guard(uint8_t ID){return true;}; 
+
+        using childrenTypes = int;
     };
 
     struct NodeLike {
@@ -119,7 +121,7 @@ concept NodeVisitor = requires(T t, archetypes::NodeLike* n){
 template<class T>
 concept Visitor = LeafnodeVisitor<T> || NodeVisitor<T>;
 
-//static_assert(NodeHeaderConcept<archetypes::NodeHeader>);
+static_assert(NodeHeaderConcept<archetypes::NodeHeader>);
 static_assert(Visitor<archetypes::Visitor>);
 static_assert(NodeLike<archetypes::NodeLike>);
 
