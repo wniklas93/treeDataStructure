@@ -76,12 +76,16 @@ struct WriteOperation{
         inline static std::any value = nullptr;
 };
 
+int sumMock(int a, int b){
+  return a + b;
+}
+
 struct Mock {
   public:
-    constexpr Mock(int k, float l){};
+    constexpr Mock(int k, float l,int(*)(int,int)){};
     constexpr ~Mock(){};
     constexpr Mock operator=(Mock m){
-      return Mock(4,3);
+      return Mock(4,3,&sumMock);
     };
 
     float f = 2.3;
@@ -93,9 +97,6 @@ struct Mock {
     int i = 0;
 };
 
-int sumMock(int a, int b){
-  return a + b;
-}
 
 using SimpleTree = Node<
                     NodeHeaderImpl_<
@@ -106,7 +107,7 @@ using SimpleTree = Node<
                         Leafnode<LeafnodeHeaderImpl<2,-4.5,float>>,
                         Leafnode<LeafnodeHeaderImpl<3,std::array<char,255>{"hello"},std::array<char,255>>>,
                         Leafnode<LeafnodeHeaderImpl<4,5,std::chrono::seconds>>,
-                        Leafnode<LeafnodeHeaderImpl<5,Mock{2,3},Mock>>,
+                        Leafnode<LeafnodeHeaderImpl<5,Mock{2,3,&sumMock},Mock>>,
                         Leafnode<LeafnodeHeaderImpl<6,nullptr,int(*)(int,int)>>,
                         Leafnode<LeafnodeHeaderImpl<7,sumMock,int(*)(int,int)>>,
                         Leafnode<LeafnodeHeaderImpl<8,&Mock::sum,int(Mock::*)(int,int)>>,
@@ -157,7 +158,7 @@ int main() {
     expect(ReadOperation::getValue<int(*)(int,int)>()                   == &sumMock);
     expect(ReadOperation::getValue<int(*)(int,int)>()(1,2)              == 3_i);
     expect(t_simple.traverse<ReadOperation>(8)                          == 0_i);
-    Mock m(4,2);
+    Mock m(4,2,&sumMock);
     expect(ReadOperation::getValue<int(Mock::*)(int,int)>()             == &Mock::sum);
     expect((m.*ReadOperation::getValue<int(Mock::*)(int,int)>())(3,2)   == 5_i);
     expect(t_simple.traverse<ReadOperation>(9)                          == 0_i);
@@ -194,7 +195,7 @@ int main() {
     expect(t_simple.traverse<WriteOperation>(7)                                   == 0_i);
     expect(t_simple.traverse<ReadOperation>(7)                                    == 0_i);
     expect(ReadOperation::getValue<int(*)(int,int)>()                             == nullptr);
-    Mock m(4,2);
+    Mock m(4,2,&sumMock);
     WriteOperation::setValue<std::function<int()>>(std::bind(
         &Mock::sum,&m,1,2));
     expect(t_simple.traverse<WriteOperation>(9)                                   == 0_i);
@@ -257,7 +258,7 @@ int main() {
     expect(t_asym.traverse<WriteOperation>(2)                                      == 0_i);
     expect(t_asym.traverse<ReadOperation>(2)                                       == 0_i);
     expect(ReadOperation::getValue<int(*)(int,int)>()(4,4)                         == 8_i);
-    Mock m(4,2);
+    Mock m(4,2,&sumMock);
     WriteOperation::setValue<std::function<int()>>(std::bind(
         &Mock::sum,&m,8,2));
     expect(t_asym.traverse<WriteOperation>(3)                                      == 0_i);
