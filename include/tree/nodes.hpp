@@ -305,7 +305,9 @@ struct Node{
         H header;
 };
 
-template<NodeLike... N>
+// Todo: Figure out why gcc 11 complains about variadic NodeLike template in nodeFactory,
+// Todo: while gcc 12 does not complain
+template<class... N>
 struct NodeList {};
 
 template<template<uint8_t> class T, typename Seq>
@@ -317,7 +319,7 @@ struct expander<T, std::index_sequence<Is...>>{
     using type = NodeList<T<Is>...>;
 };
 
-template<template<NodeLike...> class H, template<uint8_t> class T, std::size_t N>
+template<template<class...> class H, template<uint8_t> class T, std::size_t N>
 struct nodeFactory {
 
     // 1) Create node list
@@ -327,9 +329,9 @@ struct nodeFactory {
     template<class NL>
     struct Build{};
 
-    template<NodeLike... NL>
-    struct Build<NodeList<NL...>>{
-        using type = H<NL...>;
+    template<class... L>
+    struct Build<NodeList<L...>>{
+        using type = H<L...>;
     };
 
     using header = Build<nl>::type;
