@@ -17,7 +17,7 @@ void* operator new(std::size_t sz, std::size_t& allocated){
 
 // Definition of headers according to tree api
 template<uint8_t I, NodeLike... N>
-struct NodeHeaderImpl{
+struct NodeHeader{
     static constexpr uint8_t ID = I;
 
     using childrenTypes = std::tuple<N...>;
@@ -40,18 +40,21 @@ struct LeafnodeHeaderImpl{
 template<uint8_t ID>
 using Zh = Leafnode<LeafnodeHeaderImpl<ID,10,int>>;
 
+template<uint8_t ID, class... N>
+using h0 = NodeHeader<ID,N...>;
+ 
 template<uint8_t ID>
-using Yh = nodeFactory<ID,Zh,3>::type;
-
+using Yh = nodeFactory<ID,h0,Zh,3>::type;
+ 
 template<uint8_t ID>
-using Xh = nodeFactory<ID,Yh,3>::type;
+using Xh = nodeFactory<ID,h0,Yh,3>::type;
 
-using XYZTree_h = nodeFactory<0,Xh,3>::type;
+using XYZTree_h = nodeFactory<0,h0,Xh,3>::type;
 
 // Definition of tree data structure with varying data types
 template<uint8_t ID>
 using Yv = Node<
-            NodeHeaderImpl<
+            NodeHeader<
                 ID,
                 Leafnode<LeafnodeHeaderImpl<0,10,int>>,
                 Leafnode<LeafnodeHeaderImpl<1,10,double>>,
@@ -60,9 +63,9 @@ using Yv = Node<
             >;
 
 template<uint8_t ID>
-using Xv = nodeFactory<ID,Yv,3>::type;
+using Xv = nodeFactory<ID, h0, Yv,3>::type;
 
-using XYZTree_v = nodeFactory<0,Xv,3>::type;
+using XYZTree_v = nodeFactory<0, h0, Xv,3>::type;
 
 // Definition of homogenous array data structure
 using XYZArray_h = std::array<std::array<std::array<int,3>,3>,3>;

@@ -319,22 +319,22 @@ struct expander<T, std::index_sequence<Is...>>{
 
 // Todo: Figure out why gcc 11 complains about variadic NodeLike template in nodeFactory,
 // Todo: while gcc 12 does not complain (template<NodeLike...> class H)
-template<template<class...> class H, template<uint8_t> class T, std::size_t N>
+template<uint8_t ID, template<uint8_t, class...> class H, template<uint8_t> class T, std::size_t N>
 struct nodeFactory {
 
     // 1) Create node list
     using nl = typename expander<T,std::make_index_sequence<N>>::type;
 
     // 2) Create header
-    template<class NL>
+    template<uint8_t I, class NL>
     struct Build{};
 
-    template<NodeLike... L>
-    struct Build<NodeList<L...>>{
-        using type = H<L...>;
+    template<uint8_t I,NodeLike... L>
+    struct Build<I,NodeList<L...>>{
+        using type = H<I,L...>;
     };
 
-    using header = Build<nl>::type;
+    using header = Build<ID, nl>::type;
 
     // 3) Create node
     using type = Node<header>;
