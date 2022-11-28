@@ -32,9 +32,9 @@ namespace archetypes{
         NodeHeader(NodeHeader&&) = delete;
         ~NodeHeader() = delete;
 
-        static constexpr uint8_t ID{0};
+        static constexpr uint16_t ID{0};
 
-        static bool guard(uint8_t ID){return true;}; 
+        static bool guard(uint16_t ID){return true;}; 
 
         using childrenTypes = int;
     };
@@ -45,22 +45,22 @@ namespace archetypes{
         NodeLike(NodeLike&&) = delete;
         ~NodeLike() = delete;
 
-        template<class V, std::convertible_to<uint8_t>... Is>
-        bool traverse(const uint8_t& ID, const Is&... residualIDs){return true;}
+        template<class V, std::convertible_to<uint16_t>... Is>
+        bool traverse(const uint16_t& ID, const Is&... residualIDs){return true;}
 
         template<class V>
         bool accept(){return true;};
 
-        std::span<const uint8_t> getChildrenIDs() const {return std::span<uint8_t>{};};
+        std::span<const uint16_t> getChildrenIDs() const {return std::span<uint16_t>{};};
 
         struct R {};
 
         R* getChildren(){R* r;return r;}
 
         template<class N>
-        N* getChild(const uint8_t& ID){N* n; return n;}
+        N* getChild(const uint16_t& ID){N* n; return n;}
 
-        static constexpr uint8_t getID(){ return 0;}
+        static constexpr uint16_t getID(){ return 0;}
 
         static constexpr uint16_t getNumLeafnodes() {return 0;}
 
@@ -71,14 +71,14 @@ namespace archetypes{
 }
 
 template<class T>
-concept LeafnodeHeaderConcept = requires (uint8_t ID, T t){
-    {T::ID} -> std::convertible_to<uint8_t>;
+concept LeafnodeHeaderConcept = requires (uint16_t ID, T t){
+    {T::ID} -> std::convertible_to<uint16_t>;
     {t.template guard(ID)} -> std::same_as<bool>;
 };
 
 template<class T>
-concept NodeHeaderConcept = requires (uint8_t ID, T t){
-    {T::ID} -> std::convertible_to<uint8_t>;
+concept NodeHeaderConcept = requires (uint16_t ID, T t){
+    {T::ID} -> std::convertible_to<uint16_t>;
     {t.template guard(ID)} -> std::same_as<bool>;
     typename T::childrenTypes;
 };
@@ -89,17 +89,17 @@ concept LeafnodeConcept = requires (T t) {
                             {t.data}; //-> std::convertible_to<std::semiregular>;
                             {t.template accept<archetypes::Visitor>()} -> std::same_as<bool>;
                             t.header;
-                            {T::getID()} -> std::same_as<uint8_t>;
+                            {T::getID()} -> std::same_as<uint16_t>;
 };
 
 template<class T>
-concept NodeConcept = requires (T t, uint8_t ID){
+concept NodeConcept = requires (T t, uint16_t ID){
                             t.header;
-                            {T::getID()} -> std::same_as<uint8_t>;
+                            {T::getID()} -> std::same_as<uint16_t>;
                             {T::getNumLeafnodes()} -> std::same_as<uint16_t>;
                             {t.template getChild<archetypes::NodeLike>(ID)};
                             {t.getChildren()};
-                            {t.getChildrenIDs()} -> std::same_as<std::span<const uint8_t>>;
+                            {t.getChildrenIDs()} -> std::same_as<std::span<const uint16_t>>;
                             {t.template accept<archetypes::Visitor>()} -> std::same_as<bool>;
                             {t.template traverse<archetypes::Visitor>(ID)} -> std::same_as<bool>;
 };
@@ -134,7 +134,7 @@ struct overloaded : Ts... {
 
 
 // Data structure
-template<uint8_t I, auto V, class T>
+template<uint16_t I, auto V, class T>
 struct LeafnodeHeaderImpl;
 
 template<LeafnodeHeaderConcept H>
@@ -143,7 +143,7 @@ struct Leafnode{
         // Helpers for internal usage
         template <class T> struct getDefaultValue{};
 
-        template<uint8_t I, auto V, class T>
+        template<uint16_t I, auto V, class T>
         struct getDefaultValue<LeafnodeHeaderImpl<I,V,T>>{
             using type = T;
 
@@ -166,7 +166,7 @@ struct Leafnode{
             return true;
         }
 
-       static constexpr uint8_t getID() {
+       static constexpr uint16_t getID() {
             return H::ID;
         }
 };
@@ -181,12 +181,12 @@ struct Node{
         template<NodeLike... N>
         struct Children<std::tuple<N...>>{
             
-            static constexpr std::array<uint8_t, sizeof...(N)> value = {(N::getID())...};
+            static constexpr std::array<uint16_t, sizeof...(N)> value = {(N::getID())...};
 
             // Check for duplicates in ID-array
             static consteval bool uniqueIDs(){
                 return [] () {
-                    std::array<uint8_t, sizeof...(N)> childIDs = {(N::getID())...};
+                    std::array<uint16_t, sizeof...(N)> childIDs = {(N::getID())...};
                     std::sort(childIDs.begin(), childIDs.end());
                     return (std::unique(childIDs.begin(),childIDs.end()) == childIDs.end());
                 } ();
@@ -217,8 +217,8 @@ struct Node{
             return Children<typename H::childrenTypes>::getNumLeafnodes();
         }
 
-        template<Visitor V, std::convertible_to<uint8_t>... Is>
-        bool traverse(const uint8_t& ID, const Is&... residualIDs){
+        template<Visitor V, std::convertible_to<uint16_t>... Is>
+        bool traverse(const uint16_t& ID, const Is&... residualIDs){
             bool error = true;
             
             auto nodeSwitch = overloaded {
@@ -278,7 +278,7 @@ struct Node{
         }
 
         template<NodeLike N>
-        N* getChild(const uint8_t& queriedID){
+        N* getChild(const uint16_t& queriedID){
             N* n;
             auto nodeSwitch = overloaded {
                 [&]<NodeLike M>(M& m) {
@@ -293,12 +293,12 @@ struct Node{
             return n;
         }
 
-        std::span<const uint8_t> getChildrenIDs() const {
+        std::span<const uint16_t> getChildrenIDs() const {
             return std::span(Children<typename H::childrenTypes>::value.begin(), 
                              Children<typename H::childrenTypes>::value.end());
         }
 
-       static constexpr uint8_t getID() {
+       static constexpr uint16_t getID() {
             return H::ID;
         }
     
@@ -308,10 +308,10 @@ struct Node{
 template<NodeLike... N>
 struct NodeList {};
 
-template<template<uint8_t> class T, typename Seq>
+template<template<uint16_t> class T, typename Seq>
 struct expander;
 
-template<template<uint8_t> class T, std::size_t... Is>
+template<template<uint16_t> class T, std::size_t... Is>
 struct expander<T, std::index_sequence<Is...>>{
 
     using type = NodeList<T<Is>...>;
@@ -319,17 +319,17 @@ struct expander<T, std::index_sequence<Is...>>{
 
 // Todo: Figure out why gcc 11 complains about variadic NodeLike template in nodeFactory,
 // Todo: while gcc 12 does not complain (template<NodeLike...> class H)
-template<uint8_t ID, template<uint8_t, class...> class H, template<uint8_t> class T, std::size_t N>
+template<uint16_t ID, template<uint16_t, class...> class H, template<uint16_t> class T, std::size_t N>
 struct nodeFactory {
 
     // 1) Create node list
     using nl = typename expander<T,std::make_index_sequence<N>>::type;
 
     // 2) Create header
-    template<uint8_t I, class NL>
+    template<uint16_t I, class NL>
     struct Build{};
 
-    template<uint8_t I,NodeLike... L>
+    template<uint16_t I,NodeLike... L>
     struct Build<I,NodeList<L...>>{
         using type = H<I,L...>;
     };

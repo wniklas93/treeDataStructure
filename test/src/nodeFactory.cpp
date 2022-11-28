@@ -2,33 +2,33 @@
 #include "tree/nodes.hpp"
 
 // Define header implementations
-template<uint8_t I, NodeLike... N>
+template<uint16_t I, NodeLike... N>
 struct NodeBaseHeader{
-    static constexpr uint8_t ID = I;
+    static constexpr uint16_t ID = I;
 
     using childrenTypes = std::tuple<N...>;
 
-    bool guard(const uint8_t& queryID){
+    bool guard(const uint16_t& queryID){
         return queryID == ID ? true : false;
     }
 };
 
-template<uint8_t I, bool B, NodeLike... N>
+template<uint16_t I, bool B, NodeLike... N>
 struct NodeHeader : NodeBaseHeader<I,N...>{
 
     using childrenTypes = std::tuple<N...>;
 };
 
-template<uint8_t I, uint8_t K, NodeLike... N>
+template<uint16_t I, uint8_t K, NodeLike... N>
 struct AnotherNodeHeader : NodeBaseHeader<I,N...>{
     static constexpr uint8_t i = K;
 };
 
-template<uint8_t I, auto V, class T>
+template<uint16_t I, auto V, class T>
 struct LeafnodeHeaderImpl{
-    static constexpr uint8_t ID = I;
+    static constexpr uint16_t ID = I;
     
-    bool guard(const uint8_t& queryID){
+    bool guard(const uint16_t& queryID){
       return queryID == ID ? true : false;
     }
 

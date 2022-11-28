@@ -4,30 +4,30 @@
 #include <iostream>
 
 
-template<uint8_t I,NodeLike... N>
+template<uint16_t I,NodeLike... N>
 struct NodeHeaderImpl{
 
-    static constexpr uint8_t ID = I;
+    static constexpr uint16_t ID = I;
 
     using childrenTypes = std::tuple<N...>;
 
     bool active = false;
-    uint8_t activeChildren = 0;
+    uint16_t activeChildren = 0;
 
-    bool guard(const uint8_t& queryID){
+    bool guard(const uint16_t& queryID){
         return (queryID == ID) && (active == true) ? true : false;
     }
 
 };
 
-template<uint8_t I, auto V, class T>
+template<uint16_t I, auto V, class T>
 struct LeafnodeHeaderImpl{
 
-    static constexpr uint8_t ID = I;
+    static constexpr uint16_t ID = I;
 
     bool active = false;
 
-    bool guard(const uint8_t& queryID){
+    bool guard(const uint16_t& queryID){
         return (queryID == ID) && (active == true) ? true : false;
     }
 
@@ -63,7 +63,7 @@ struct CreateOperation{
           return true;
         }        
 
-        inline static uint8_t ID = 0;
+        inline static uint16_t ID = 0;
 };
 
 struct DeleteOperation{
@@ -102,7 +102,7 @@ struct DeleteOperation{
           return true;
         }
 
-        inline static uint8_t ID = 0;
+        inline static uint16_t ID = 0;
 };
 
 struct ReadOperation{

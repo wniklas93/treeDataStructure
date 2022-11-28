@@ -5,26 +5,25 @@
 #include "tree/nodes.hpp"
 
 
-template<uint8_t I,NodeLike... N>
+template<uint16_t I,NodeLike... N>
 struct NodeHeaderImpl{
-    static constexpr uint8_t ID = I;
+    static constexpr uint16_t ID = I;
 
     using childrenTypes = std::tuple<N...>;
 
-    bool guard(const uint8_t& queryID){
+    bool guard(const uint16_t& queryID){
       return queryID == ID ? true : false;
     }
 
 };
 
-template<uint8_t I, auto V, class T>
+template<uint16_t I, auto V, class T>
 struct LeafnodeHeaderImpl{
-    static constexpr uint8_t ID = I;
+    static constexpr uint16_t ID = I;
 
-    bool guard(const uint8_t& queryID){
+    bool guard(const uint16_t& queryID){
       return queryID == ID ? true : false;
     }
-
 };
 
 using SimpleTree = Node<

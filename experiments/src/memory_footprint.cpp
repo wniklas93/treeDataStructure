@@ -16,22 +16,22 @@ void* operator new(std::size_t sz, std::size_t& allocated){
 
 
 // Definition of headers according to tree api
-template<uint8_t I, NodeLike... N>
+template<uint16_t I, NodeLike... N>
 struct NodeHeader{
-    static constexpr uint8_t ID = I;
+    static constexpr uint16_t ID = I;
 
     using childrenTypes = std::tuple<N...>;
 
-    bool guard(const uint8_t& queryID){
+    bool guard(const uint16_t& queryID){
       return queryID == ID ? true : false;
     }
 };
 
-template<uint8_t I, auto V, class T>
+template<uint16_t I, auto V, class T>
 struct LeafnodeHeaderImpl{
-    static constexpr uint8_t ID = I;
+    static constexpr uint16_t ID = I;
     
-    bool guard(const uint8_t& queryID){
+    bool guard(const uint16_t& queryID){
       return queryID == ID ? true : false;
     }
 };
