@@ -22,6 +22,9 @@ struct NodeHeaderImpl_{
 template<uint16_t I, auto V, class T>
 struct LeafnodeHeaderImpl{
     static constexpr uint8_t ID = I;
+
+    using type = T;
+    inline const static T defaultValue = T(V);
     
     bool guard(const uint8_t& queryID){
       return queryID == ID ? true : false;
@@ -96,7 +99,6 @@ struct Mock {
 
     int i = 0;
 };
-
 
 using SimpleTree = Node<
                     NodeHeaderImpl_<

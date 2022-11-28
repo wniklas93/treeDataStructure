@@ -16,6 +16,8 @@ struct NodeHeaderImpl{
 template<uint16_t I, auto V, class T>
 struct LeafnodeHeaderImpl{
     static constexpr uint16_t ID = I;
+    using type = T;
+    inline constexpr static T defaultValue = T(V);
 
     bool guard(const uint16_t& queryID){
       return queryID == ID ? true : false;

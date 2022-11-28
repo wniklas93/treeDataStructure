@@ -67,6 +67,8 @@ namespace archetypes{
         NodeHeader header;
         R data;
         using childrenTypes = std::tuple<int,float>;
+        using type = int;
+        static constexpr int defaultValue = 1;
     };
 }
 
@@ -74,6 +76,8 @@ template<class T>
 concept LeafnodeHeaderConcept = requires (uint16_t ID, T t){
     {T::ID} -> std::convertible_to<uint16_t>;
     {t.template guard(ID)} -> std::same_as<bool>;
+    typename T::type;
+    T::defaultValue;
 };
 
 template<class T>
@@ -134,27 +138,12 @@ struct overloaded : Ts... {
 
 
 // Data structure
-template<uint16_t I, auto V, class T>
-struct LeafnodeHeaderImpl;
 
 template<LeafnodeHeaderConcept H>
-struct Leafnode{
-    private:
-        // Helpers for internal usage
-        template <class T> struct getDefaultValue{};
-
-        template<uint16_t I, auto V, class T>
-        struct getDefaultValue<LeafnodeHeaderImpl<I,V,T>>{
-            using type = T;
-
-            constexpr static T value(){
-                return T(V);
-            }
-        };
-    
+struct Leafnode{    
     public:
         // Member variables
-        getDefaultValue<H>::type data = getDefaultValue<H>::value();
+        H::type data = H::defaultValue;
         H header;
 
         template<Visitor V>
