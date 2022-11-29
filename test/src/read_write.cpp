@@ -2,9 +2,11 @@
 #include <string>
 #include <chrono>
 #include <functional>
+#include <iostream>
 
 #include <boost/ut.hpp>
 #include "tree/nodes.hpp"
+
 
 
 template<uint16_t I, bool B, NodeLike... N>
@@ -25,11 +27,10 @@ struct LeafnodeHeaderImpl{
 
     using type = T;
     inline const static T defaultValue = T(V);
-    
+
     bool guard(const uint8_t& queryID){
       return queryID == ID ? true : false;
     }
-
 };
 
 struct ReadOperation{
@@ -37,6 +38,7 @@ struct ReadOperation{
 
         template<LeafnodeConcept L>
         static bool visitLeafnode(L* l){
+
             value = l->data;
         return false;
         }
