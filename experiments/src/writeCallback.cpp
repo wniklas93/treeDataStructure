@@ -112,7 +112,6 @@ void print(std::string input) {
 }
 
 void print_verbose(std::string input){
-
     std::cout << "New message: " << input << std::endl;
 }
 
