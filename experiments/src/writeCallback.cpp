@@ -74,8 +74,46 @@ struct WriteOperation{
             };
 };
 
+template<class T>
+struct SetCallbackOperation
+{
+    template <LeafnodeConcept L> 
+    static bool visitLeafnode(L *l)
+    {
+        headerSwitch(l->header);
+        return false;
+    }
+
+    static void SetCallback(void(*cb)(T))
+    {
+        Callback = [cb](T value) { return (*cb)(value); };
+    }
+
+    template <NodeLike N> 
+    static bool previsit(N* n)
+    {
+        return false;
+    }
+private:
+    inline static std::function<void(T)> Callback;
+
+    static constexpr auto headerSwitch = overloaded {
+        []<LeafnodeHeaderWithCallbackConcept LHW>(LHW header){
+            // Todo: Make sure function signature match -> if not verbose error message
+            header.callback = Callback;
+            return false;
+        },
+        []<LeafnodeHeaderConcept LH>(LH header){return true;},
+    };
+};
+
 void print(std::string input) {
     std::cout << input << std::endl;
+}
+
+void print_verbose(std::string input){
+
+    std::cout << "New message: " << input << std::endl;
 }
 
 
@@ -84,8 +122,8 @@ using SimpleTree = Node<
                         0,
                         true,
                         Leafnode<LeafnodeHeader<0,5,int>>,
-                        Leafnode<LeafnodeHeaderWithCallback<1,5.5,double,print,void(*)(std::string)>>,
-                        Leafnode<LeafnodeHeaderWithCallback<2,-4.5,float,print,void(*)(std::string)>>,
+                        Leafnode<LeafnodeHeaderWithCallback<1,5.5,double,print,std::function<void(std::string)>>>,
+                        Leafnode<LeafnodeHeaderWithCallback<2,-4.5,float,print,std::function<void(std::string)>>>,
                         Leafnode<LeafnodeHeader<3,std::array<char,255>{"hello"},std::array<char,255>>>,
                         Leafnode<LeafnodeHeader<4,5,std::chrono::seconds>>,
                         Leafnode<LeafnodeHeader<9,nullptr,std::function<int()>>>
@@ -119,6 +157,15 @@ int main(){
     WriteOperation::setValue<std::array<char,255>>(std::array<char,255>{"test"});
     t_simple.traverse<WriteOperation>(3);
     WriteOperation::setValue<std::chrono::seconds>(std::chrono::seconds(8));
+
+    // Set new callback function
+    SetCallbackOperation<std::string>::SetCallback(&print_verbose);
+    t_simple.traverse<SetCallbackOperation<std::string>>(1);
+
+    WriteOperation::setValue<double>(1.1);
+    t_simple.traverse<WriteOperation>(1);
+
+
 
     std::cout << std::endl;
 
