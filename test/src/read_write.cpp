@@ -22,7 +22,7 @@ struct NodeHeaderImpl_{
 };
 
 template<uint16_t I, auto V, class T>
-struct LeafnodeHeaderImpl{
+struct LeafnodeHeader{
     static constexpr uint8_t ID = I;
 
     using type = T;
@@ -106,16 +106,16 @@ using SimpleTree = Node<
                     NodeHeaderImpl_<
                         0,
                         true,
-                        Leafnode<LeafnodeHeaderImpl<0,5,int>>,
-                        Leafnode<LeafnodeHeaderImpl<1,5.5,double>>,
-                        Leafnode<LeafnodeHeaderImpl<2,-4.5,float>>,
-                        Leafnode<LeafnodeHeaderImpl<3,std::array<char,255>{"hello"},std::array<char,255>>>,
-                        Leafnode<LeafnodeHeaderImpl<4,5,std::chrono::seconds>>,
-                        Leafnode<LeafnodeHeaderImpl<5,Mock{2,3,&sumMock},Mock>>,
-                        Leafnode<LeafnodeHeaderImpl<6,nullptr,int(*)(int,int)>>,
-                        Leafnode<LeafnodeHeaderImpl<7,sumMock,int(*)(int,int)>>,
-                        Leafnode<LeafnodeHeaderImpl<8,&Mock::sum,int(Mock::*)(int,int)>>,
-                        Leafnode<LeafnodeHeaderImpl<9,nullptr,std::function<int()>>>
+                        Leafnode<LeafnodeHeader<0,5,int>>,
+                        Leafnode<LeafnodeHeader<1,5.5,double>>,
+                        Leafnode<LeafnodeHeader<2,-4.5,float>>,
+                        Leafnode<LeafnodeHeader<3,std::array<char,255>{"hello"},std::array<char,255>>>,
+                        Leafnode<LeafnodeHeader<4,5,std::chrono::seconds>>,
+                        Leafnode<LeafnodeHeader<5,Mock{2,3,&sumMock},Mock>>,
+                        Leafnode<LeafnodeHeader<6,nullptr,int(*)(int,int)>>,
+                        Leafnode<LeafnodeHeader<7,sumMock,int(*)(int,int)>>,
+                        Leafnode<LeafnodeHeader<8,&Mock::sum,int(Mock::*)(int,int)>>,
+                        Leafnode<LeafnodeHeader<9,nullptr,std::function<int()>>>
                       >
                   >;
 
@@ -124,9 +124,9 @@ using AsymetricTree = Node<
                             0,
                             true,
                             SimpleTree,
-                            Leafnode<LeafnodeHeaderImpl<1,2.5,double>>,
-                            Leafnode<LeafnodeHeaderImpl<2,nullptr,int(*)(int,int)>>,
-                            Leafnode<LeafnodeHeaderImpl<3,nullptr,std::function<int()>>>
+                            Leafnode<LeafnodeHeader<1,2.5,double>>,
+                            Leafnode<LeafnodeHeader<2,nullptr,int(*)(int,int)>>,
+                            Leafnode<LeafnodeHeader<3,nullptr,std::function<int()>>>
                           >
                         >;
 

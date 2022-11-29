@@ -23,5 +23,6 @@ set(experiments_sources
   src/tree.cpp
   src/memory_footprint.cpp
   src/permissions.cpp
+  src/writeCallback.cpp
 )
 
