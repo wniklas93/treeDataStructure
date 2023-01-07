@@ -1,44 +1,46 @@
 #include <boost/ut.hpp>
 #include "tree/nodes.hpp"
 
+using namespace Tree;
+
 template<uint16_t I,NodeLike... N>
-struct NodeHeaderImpl{
+struct NodeHeader{
     static constexpr uint16_t ID = I;
 
     using childrenTypes = std::tuple<N...>;
 
-    bool guard(const uint16_t& queryID){
-      return queryID == ID ? true : false;
+    int guard(){
+      return NO_ERROR;
     }
 };
 
 template<uint16_t I, auto V, class T>
-struct LeafnodeHeaderImpl{
+struct LeafnodeHeader{
     static constexpr uint16_t ID = I;
     using type = T;
     inline constexpr static T defaultValue = T(V);
 
-    bool guard(const uint16_t& queryID){
-      return queryID == ID ? true : false;
+    int guard(){
+      return NO_ERROR;
     }
 };
 
 
 using SimpleTree = Node<
-                    NodeHeaderImpl<
+                    NodeHeader<
                         0,
-                        Leafnode<LeafnodeHeaderImpl<0,5,int>>,
-                        Leafnode<LeafnodeHeaderImpl<1,5.5,double>>,
-                        Leafnode<LeafnodeHeaderImpl<2,-4.5,float>>,
-                        Leafnode<LeafnodeHeaderImpl<3,std::array<char,255>{"hello"},std::array<char,255>>>
+                        Leafnode<LeafnodeHeader<0,5,int>>,
+                        Leafnode<LeafnodeHeader<1,5.5,double>>,
+                        Leafnode<LeafnodeHeader<2,-4.5,float>>,
+                        Leafnode<LeafnodeHeader<3,std::array<char,255>{"hello"},std::array<char,255>>>
                       >
                   >;
 
 using AsymetricTree = Node<
-                        NodeHeaderImpl<
+                        NodeHeader<
                             0,
                             SimpleTree,
-                            Leafnode<LeafnodeHeaderImpl<1,2.5,double>>
+                            Leafnode<LeafnodeHeader<1,2.5,double>>
                           >
                         >;
 

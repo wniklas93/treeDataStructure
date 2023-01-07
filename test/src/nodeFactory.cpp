@@ -1,6 +1,8 @@
 #include <boost/ut.hpp>
 #include "tree/nodes.hpp"
 
+using namespace Tree;
+
 // Define header implementations
 template<uint16_t I, NodeLike... N>
 struct NodeBaseHeader{
@@ -8,8 +10,8 @@ struct NodeBaseHeader{
 
     using childrenTypes = std::tuple<N...>;
 
-    bool guard(const uint16_t& queryID){
-        return queryID == ID ? true : false;
+    int guard(){
+        return NO_ERROR;
     }
 };
 
@@ -30,8 +32,8 @@ struct LeafnodeHeaderImpl{
     using type = T;
     inline constexpr static T defaultValue = T(V);
     
-    bool guard(const uint16_t& queryID){
-      return queryID == ID ? true : false;
+    int guard(){
+      return NO_ERROR;
     }
 
 };

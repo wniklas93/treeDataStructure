@@ -1,5 +1,4 @@
-#ifndef NODES_H
-#define NODES_H
+#pragma once
 
 #include <utility>
 #include <cstdint>
@@ -8,6 +7,8 @@
 #include <span>
 #include <any>
 #include <iostream>
+
+namespace Tree{
 
 // Data structure interface
 // Todo: Code revision of concepts/interface
@@ -20,10 +21,10 @@ namespace archetypes{
         ~Visitor() = delete;
 
         template<class N>
-        static bool visitNode(N* n){return true;}
+        static int visitNode(N* n){return true;}
 
         template<class N>
-        static bool previsit(N* n){return true;}
+        static int previsit(N* n){return true;}
     };
 
     struct NodeHeader{
@@ -34,7 +35,7 @@ namespace archetypes{
 
         static constexpr uint16_t ID{0};
 
-        static bool guard(uint16_t ID){return true;}; 
+        static int guard(){return 0;}; 
 
         using childrenTypes = int;
     };
@@ -46,10 +47,10 @@ namespace archetypes{
         ~NodeLike() = delete;
 
         template<class V, std::convertible_to<uint16_t>... Is>
-        bool traverse(const uint16_t& ID, const Is&... residualIDs){return true;}
+        int traverse(const uint16_t& ID, const Is&... residualIDs){return true;}
 
         template<class V>
-        bool accept(){return true;};
+        int accept(){return true;};
 
         std::span<const uint16_t> getChildrenIDs() const {return std::span<uint16_t>{};};
 
@@ -73,17 +74,17 @@ namespace archetypes{
 }
 
 template<class T>
-concept LeafnodeHeaderConcept = requires (uint16_t ID, T t){
+concept LeafnodeHeaderConcept = requires (T t){
     {T::ID} -> std::convertible_to<uint16_t>;
-    {t.template guard(ID)} -> std::same_as<bool>;
+    {t.template guard()} -> std::same_as<int>;
     typename T::type;
     T::defaultValue;
 };
 
 template<class T>
-concept NodeHeaderConcept = requires (uint16_t ID, T t){
+concept NodeHeaderConcept = requires (T t){
     {T::ID} -> std::convertible_to<uint16_t>;
-    {t.template guard(ID)} -> std::same_as<bool>;
+    {t.template guard()} -> std::same_as<int>;
     typename T::childrenTypes;
 };
 
@@ -91,7 +92,7 @@ concept NodeHeaderConcept = requires (uint16_t ID, T t){
 template<class T>
 concept LeafnodeConcept = requires (T t) {
                             {t.data}; //-> std::convertible_to<std::semiregular>;
-                            {t.template accept<archetypes::Visitor>()} -> std::same_as<bool>;
+                            {t.template accept<archetypes::Visitor>()} -> std::same_as<int>;
                             t.header;
                             {T::getID()} -> std::same_as<uint16_t>;
 };
@@ -104,8 +105,8 @@ concept NodeConcept = requires (T t, uint16_t ID){
                             {t.template getChild<archetypes::NodeLike>(ID)};
                             {t.getChildren()};
                             {t.getChildrenIDs()} -> std::same_as<std::span<const uint16_t>>;
-                            {t.template accept<archetypes::Visitor>()} -> std::same_as<bool>;
-                            {t.template traverse<archetypes::Visitor>(ID)} -> std::same_as<bool>;
+                            {t.template accept<archetypes::Visitor>()} -> std::same_as<int>;
+                            {t.template traverse<archetypes::Visitor>(ID)} -> std::same_as<int>;
 };
 
 template<class T>
@@ -113,13 +114,13 @@ concept NodeLike = LeafnodeConcept<T> || NodeConcept<T>;
 
 template<class T>
 concept LeafnodeVisitor = requires(T t, archetypes::NodeLike* n){
-    {t.visitLeafnode(n)} -> std::same_as<bool>;
+    {t.visitLeafnode(n)} -> std::same_as<int>;
 };
 
 template<class T>
 concept NodeVisitor = requires(T t, archetypes::NodeLike* n){
-    {t.visitNode(n)} -> std::same_as<bool>;
-    {t.previsit(n)} -> std::same_as<bool>;
+    {t.visitNode(n)} -> std::same_as<int>;
+    {t.previsit(n)} -> std::same_as<int>;
 };
 
 template<class T>
@@ -136,6 +137,10 @@ struct overloaded : Ts... {
     using Ts::operator()...;
 };
 
+// Error codes
+constexpr int NO_ERROR = 0;
+constexpr int ID_NOT_FOUND = 1;
+constexpr int VISITOR_NOT_ACCEPTED = 2;
 
 // Data structure
 
@@ -147,12 +152,12 @@ struct Leafnode{
         H header;
 
         template<Visitor V>
-        bool accept() {
+        int accept() {
             if constexpr (LeafnodeVisitor<V>){
                 using L = std::remove_pointer_t<decltype(this)>;
                 return V::template visitLeafnode<L>(this);
             }
-            return true;
+            return VISITOR_NOT_ACCEPTED;
         }
 
        static constexpr uint16_t getID() {
@@ -207,30 +212,36 @@ struct Node{
         }
 
         template<Visitor V, std::convertible_to<uint16_t>... Is>
-        bool traverse(const uint16_t& ID, const Is&... residualIDs){
-            bool error = true;
+        int traverse(const uint16_t& ID, const Is&... residualIDs){
+            int error = ID_NOT_FOUND;
             
             auto nodeSwitch = overloaded {
                 [&]<LeafnodeConcept L>(L& l) {
+
+                    if(l.header.ID != ID) return;
+                    error = l.header.template guard();
+                    if(error != NO_ERROR) return;
                     
                     if constexpr (sizeof... (residualIDs) == 0)
                     {
-                        if(l.header.template guard(ID)){
-                            V::template previsit<L>(&l);
-                            error = l.template accept<V>();
-                        }
+                        V::template previsit<L>(&l);
+                        error = l.template accept<V>();
+                    } else {
+                        error = ID_NOT_FOUND;
                     }
                 },
                 [&]<NodeConcept K>(K& k){
+
+                    if(k.header.ID != ID) return;
+                    error = k.header.template guard();
+                    if(error != NO_ERROR) return;
                     
                     if constexpr (sizeof... (residualIDs) > 0)
                     {
-                        k.header.template guard(ID) ? (
-                            V::template previsit<K>(&k),
-                            error = k.template traverse<V>(residualIDs...),
-                        false) : false;
+                        V::template previsit<K>(&k);
+                        error = k.template traverse<V>(residualIDs...);
                     } else {
-                        k.header.template guard(ID) ? error = k.template accept<V>() : false;
+                        error = k.template accept<V>();
                     }
                 },
             };
@@ -238,28 +249,27 @@ struct Node{
             // Apply switch
             std::apply([&](auto&... child){ (nodeSwitch(child), ...);}, children);
 
-            return error;
+            return std::move(error);
             
         }
 
         template<Visitor V>
-        bool traverse(){
-            bool error = true;
+        int traverse(){
+            int error = header.template guard();
+            if(error != NO_ERROR) return std::move(error);
             
-            header.template guard(header.ID) ? error = accept<V>() : false;
-
-            return error;
+            return accept<V>();
         }
 
         template<Visitor V>
-        bool accept(){
+        int accept(){
             
             if constexpr(NodeVisitor<V>){
                 using N = std::remove_pointer_t<decltype(this)>;
                 return V::template visitNode<N>(this);
             }
             
-            return true;
+            return VISITOR_NOT_ACCEPTED;
         }
 
         H::childrenTypes* getChildren(){
@@ -329,4 +339,5 @@ struct nodeFactory {
     using type = Node<header>;
 };
 
-#endif
+} // end namespace "Tree"
+
