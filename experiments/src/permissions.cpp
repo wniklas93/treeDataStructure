@@ -4,6 +4,10 @@
 #include <chrono>
 #include <functional>
 
+using namespace Tree;
+
+constexpr int MISSING_PERMISSION = 3;
+
 struct Permission {
     unsigned int r:1;
     unsigned int w:1;
@@ -11,26 +15,26 @@ struct Permission {
 }__attribute__((packed));
 
 template<uint16_t I, bool B, NodeLike... N>
-struct NodeHeaderImpl_{
+struct NodeHeader{
     static constexpr uint8_t ID = I;
 
     using childrenTypes = std::tuple<N...>;
 
-    bool guard(const uint16_t& queryID){
-      return queryID == ID ? true : false;
+    int guard(){
+      return NO_ERROR;
     }
 
 };
 
 template<uint16_t I, auto V, auto P, class T>
-struct LeafnodeHeaderImpl{
+struct LeafnodeHeader{
     static constexpr uint8_t ID = I;
 
     using type = T;
     inline const static T defaultValue = T(V);
     
-    bool guard(const uint8_t& queryID){
-      return queryID == ID ? true : false;
+    int guard(){
+      return NO_ERROR;
     }
 
     Permission permission = P;
@@ -41,14 +45,14 @@ struct ReadOperation{
     public:
 
         template<LeafnodeConcept L>
-        static bool visitLeafnode(L* l){
+        static int visitLeafnode(L* l){
             if (!l->header.permission.r){
                 std::cout << "Read permission required!" << std::endl;
-                return true;
+                return MISSING_PERMISSION;
             }
             std::cout << "Read access granted" << std::endl;
             value = l->data;
-            return false;
+            return NO_ERROR;
         }
 
         template<class T>
@@ -57,8 +61,8 @@ struct ReadOperation{
         }
 
         template<NodeLike N>
-        static bool previsit(N* n){
-            return true;
+        static int previsit(N* n){
+            return NO_ERROR;
         }
 
     private:
@@ -69,19 +73,19 @@ struct WriteOperation{
     public:
 
         template<LeafnodeConcept L>
-        static bool visitLeafnode(L* l){
+        static int visitLeafnode(L* l){
             if(!l->header.permission.w){
                 std::cout << "Write permission required!" << std::endl;
-                return true;
+                return MISSING_PERMISSION;
             }
             std::cout << "Write access granted" << std::endl;
             l->data = std::any_cast<decltype(l->data)>(value);
-            return false;
+            return NO_ERROR;
         }
 
         template<NodeLike N>
-        static bool previsit(N* n){
-            return true;
+        static int previsit(N* n){
+            return NO_ERROR;
         }
 
         template<class T>
@@ -99,27 +103,27 @@ void print(std::string input){
 }
 
 using SimpleTree = Node<
-                    NodeHeaderImpl_<
+                    NodeHeader<
                         0,
                         true,
-                        Leafnode<LeafnodeHeaderImpl<0,5,Permission{1,1,0},int>>,
-                        Leafnode<LeafnodeHeaderImpl<1,5.5,Permission{1,1,0},double>>,
-                        Leafnode<LeafnodeHeaderImpl<2,-4.5,Permission{1,1,0},float>>,
-                        Leafnode<LeafnodeHeaderImpl<3,std::array<char,255>{"hello"},Permission{1,1,0},std::array<char,255>>>,
-                        Leafnode<LeafnodeHeaderImpl<4,5,Permission{1,1,0},std::chrono::seconds>>,
-                        Leafnode<LeafnodeHeaderImpl<6,nullptr,Permission{0,1,1},int(*)(int,int)>>,
-                        Leafnode<LeafnodeHeaderImpl<9,nullptr,Permission{0,1,1},std::function<int()>>>
+                        Leafnode<LeafnodeHeader<0,5,Permission{1,1,0},int>>,
+                        Leafnode<LeafnodeHeader<1,5.5,Permission{1,1,0},double>>,
+                        Leafnode<LeafnodeHeader<2,-4.5,Permission{1,1,0},float>>,
+                        Leafnode<LeafnodeHeader<3,std::array<char,255>{"hello"},Permission{1,1,0},std::array<char,255>>>,
+                        Leafnode<LeafnodeHeader<4,5,Permission{1,1,0},std::chrono::seconds>>,
+                        Leafnode<LeafnodeHeader<6,nullptr,Permission{0,1,1},int(*)(int,int)>>,
+                        Leafnode<LeafnodeHeader<9,nullptr,Permission{0,1,1},std::function<int()>>>
                       >
                   >;
 
 using AsymetricTree = Node<
-                        NodeHeaderImpl_<
+                        NodeHeader<
                             0,
                             true,
                             SimpleTree,
-                            Leafnode<LeafnodeHeaderImpl<1,2.5,Permission{1,1,0},double>>,
-                            Leafnode<LeafnodeHeaderImpl<2,nullptr,Permission{0,1,1},int(*)(int,int)>>,
-                            Leafnode<LeafnodeHeaderImpl<3,nullptr,Permission{0,1,1},std::function<int()>>>
+                            Leafnode<LeafnodeHeader<1,2.5,Permission{1,1,0},double>>,
+                            Leafnode<LeafnodeHeader<2,nullptr,Permission{0,1,1},int(*)(int,int)>>,
+                            Leafnode<LeafnodeHeader<3,nullptr,Permission{0,1,1},std::function<int()>>>
                           >
                         >;
 

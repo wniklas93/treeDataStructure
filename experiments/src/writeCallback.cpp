@@ -5,16 +5,16 @@
 
 #include "tree/nodes.hpp"
 
-
+using namespace Tree;
 
 template<uint16_t I, bool B, NodeLike... N>
-struct NodeHeaderImpl_{
+struct NodeHeader{
     static constexpr uint8_t ID = I;
 
     using childrenTypes = std::tuple<N...>;
 
-    bool guard(const uint16_t& queryID){
-      return queryID == ID ? true : false;
+    int guard(){
+      return NO_ERROR;
     }
 
 };
@@ -26,8 +26,8 @@ struct LeafnodeHeader{
     using type = T;
     inline const static T defaultValue = T(V);
 
-    bool guard(const uint8_t& queryID){
-      return queryID == ID ? true : false;
+    int guard(){
+      return NO_ERROR;
     }
 };
 
@@ -46,15 +46,15 @@ struct WriteOperation{
     public:
 
         template<LeafnodeConcept L>
-        static bool visitLeafnode(L* l){
+        static int visitLeafnode(L* l){
             l->data = std::any_cast<decltype(l->data)>(value);
             headerSwitch(l->header);
-            return false;
+            return NO_ERROR;
         }
 
         template<NodeLike N>
-        static bool previsit(N* n){
-          return true;
+        static int previsit(N* n){
+          return NO_ERROR;
         }
 
         template<class T>
@@ -78,10 +78,10 @@ template<class T>
 struct SetCallbackOperation
 {
     template <LeafnodeConcept L> 
-    static bool visitLeafnode(L *l)
+    static int visitLeafnode(L *l)
     {
         headerSwitch(l->header);
-        return false;
+        return NO_ERROR;
     }
 
     static void SetCallback(void(*cb)(T))
@@ -90,9 +90,9 @@ struct SetCallbackOperation
     }
 
     template <NodeLike N> 
-    static bool previsit(N* n)
+    static int previsit(N* n)
     {
-        return false;
+        return NO_ERROR;
     }
 private:
     inline static std::function<void(T)> Callback;
@@ -117,7 +117,7 @@ void print_verbose(std::string input){
 
 
 using SimpleTree = Node<
-                    NodeHeaderImpl_<
+                    NodeHeader<
                         0,
                         true,
                         Leafnode<LeafnodeHeader<0,5,int>>,
@@ -130,7 +130,7 @@ using SimpleTree = Node<
                   >;
 
 using AsymetricTree = Node<
-                        NodeHeaderImpl_<
+                        NodeHeader<
                             0,
                             true,
                             SimpleTree,

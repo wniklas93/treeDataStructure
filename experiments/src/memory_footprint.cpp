@@ -8,6 +8,8 @@
 
 #include "tree/nodes.hpp"
 
+using namespace Tree;
+
 // Function to track memory consumption of objects
 void* operator new(std::size_t sz, std::size_t& allocated){
     allocated += sz;
@@ -22,8 +24,8 @@ struct NodeHeader{
 
     using childrenTypes = std::tuple<N...>;
 
-    bool guard(const uint16_t& queryID){
-      return queryID == ID ? true : false;
+    int guard(){
+      return NO_ERROR;
     }
 };
 
@@ -33,8 +35,8 @@ struct LeafnodeHeaderImpl{
     using type = T;
     inline constexpr static T defaultValue = T(V);
     
-    bool guard(const uint16_t& queryID){
-      return queryID == ID ? true : false;
+    int guard(){
+      return NO_ERROR;
     }
 };
 
