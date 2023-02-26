@@ -23,77 +23,77 @@ endif()
 
 ################## Specifying Build Process ##################
 
-# #
-# # Set compiler options and build options
-# #
+#
+# Set compiler options and build options
+#
 
-# include(cmake/StandardSettings.cmake)
-# include(cmake/CompilerWarnings.cmake)
-# set_project_warnings(${PROJECT_NAME})
+include(cmake/StandardSettings.cmake)
+include(cmake/CompilerWarnings.cmake)
+set_project_warnings(${PROJECT_NAME})
 
-# message(STATUS "Set compiler options and build options \n")
+message(STATUS "Set compiler options and build options \n")
 
-# if(NOT CMAKE_BUILD_TYPE)
-#   set(CMAKE_BUILD_TYPE "Debug")
-# endif()
+if(NOT CMAKE_BUILD_TYPE)
+  set(CMAKE_BUILD_TYPE "Debug")
+endif()
 
 
-# #
-# # Create library, setup header and source files
-# #
+#
+# Create library, setup header and source files
+#
 
-# # Find all headers and source files
-# include(cmake/SourcesAndHeaders.cmake)
+# Find all headers and source files
+include(cmake/SourcesAndHeaders.cmake)
 
-# message(STATUS "Build library:")
-# add_library(
-#     ${PROJECT_NAME}
-#     STATIC
-#     ${headers}
-#     ${sources})
+message(STATUS "Build library:")
+add_library(
+    ${PROJECT_NAME}
+    STATIC
+    ${headers}
+    ${sources})
 
-# message("\t Found the following sources:")
-# foreach(source IN LISTS sources)
-#   message("\t\t * ${source}")
-# endforeach()
-# message("\t Found the following headers:")
-# foreach(header IN LISTS headers)
-#   message("\t\t * ${header}")
-# endforeach()
+message("\t Found the following sources:")
+foreach(source IN LISTS sources)
+  message("\t\t * ${source}")
+endforeach()
+message("\t Found the following headers:")
+foreach(header IN LISTS headers)
+  message("\t\t * ${header}")
+endforeach()
 
-# set_target_properties(
-#   ${PROJECT_NAME}
-#   PROPERTIES
-#   ARCHIVE_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/lib/${CMAKE_BUILD_TYPE}"
-#   LIBRARY_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/lib/${CMAKE_BUILD_TYPE}"
-#   RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/bin/${CMAKE_BUILD_TYPE}"
-# )
+set_target_properties(
+  ${PROJECT_NAME}
+  PROPERTIES
+  ARCHIVE_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/lib/${CMAKE_BUILD_TYPE}"
+  LIBRARY_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/lib/${CMAKE_BUILD_TYPE}"
+  RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/bin/${CMAKE_BUILD_TYPE}"
+)
 
-# message(STATUS "Added all header and source files.\n")
+message(STATUS "Added all header and source files.\n")
 
-# #
-# # Model project dependencies (Libraries)
-# #
+#
+# Model project dependencies (Libraries)
+#
 
-# # no external dependencies exist
+# no external dependencies exist
 
-# #
-# # Add library to project
-# #
+#
+# Add library to project
+#
 
-# target_include_directories(
-#     ${PROJECT_NAME}
-#     PUBLIC
-#     $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
-#     PRIVATE
-#     ${CMAKE_CURRENT_SOURCE_DIR}/sr
-#     INTERFACE
-#   )
+target_include_directories(
+    ${PROJECT_NAME}
+    PUBLIC
+    $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
+    PRIVATE
+    ${CMAKE_CURRENT_SOURCE_DIR}/sr
+    INTERFACE
+  )
 
-# # message(STATUS "Finished setting up include directories.")
-# # add_library(${PROJECT_NAME}::${PROJECT_NAME} ALIAS ${PROJECT_NAME})
+# message(STATUS "Finished setting up include directories.")
+# add_library(${PROJECT_NAME}::${PROJECT_NAME} ALIAS ${PROJECT_NAME})
 
-# message(STATUS "Added library ${PROJECT_NAME}")
+message(STATUS "Added library ${PROJECT_NAME}")
 
 # #
 # # Unit testing setup

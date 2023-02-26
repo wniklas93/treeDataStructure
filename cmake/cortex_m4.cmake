@@ -16,14 +16,25 @@ set(CMAKE_AR ${TOOLCHAIN_GCCARM_PATH}/arm-none-eabi-ar CACHE PATH armgcc_ar)
 set(CMAKE_TRY_COMPILE_TARGET_TYPE "STATIC_LIBRARY")
 
 # Specify cross compiler options
-set(ARM_OPTIONS -mcpu=cortex-m4 -mfloat-abi=soft --specs=nano.specs)
+
+set(RELEASE_OPTIONS "-O3")
+set(DEBUG_OPTIONS "-g") # -Og                                   
 
 add_compile_options(
-  ${ARM_OPTIONS}
-  -fmessage-length=0
-  -funsigned-char
-  -ffunction-sections
-  -fdata-sections
-  -MMD
-  -MP
+  ### ARM Options ###
+  -mcpu=cortex-m4                         # Target ARM processor
+  -mfloat-abi=hard                        # Enable full hardware floating-point support
+  -mfpu=fpv4-sp-d16                       # Single-precision only variant of the VFPv4-D16 extension
+  --specs=nano.specs                      # Enable newlib-nano --> Code and data size reduction  
+  -mthumb                                 # Instructions set
+  ### GCC Options ###
+  -ffunction-sections                     # Functions and variables are mapped to sections
+  -fdata-sections                         # Linker discards unused funtions (--gc-sections)
+  -std=c++20                              # C++ version
+  -fno-rtti                               # Disable generation of runtime information
+  -fno-exceptions                         # Disable exceptions
+  -flto                                   # Enable linker code optimization
+#  --gc-sections                           # Linker discards unreferenced sections
+  $<$<CONFIG:DEBUG>:${DEBUG_OPTIONS}>
+  $<$<CONFIG:RELEASE>:${RELEASE_OPTIONS}>
 )
