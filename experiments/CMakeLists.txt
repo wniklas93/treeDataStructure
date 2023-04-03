@@ -1,3 +1,5 @@
+
+
 cmake_minimum_required(VERSION 3.15)
 
 #
@@ -16,16 +18,16 @@ foreach(file ${experiments_sources})
   add_executable(${experiment_name} ${file})
 
 
-  #
-  # Set the compiler standard
-  #
+ #
+ # Set the compiler standard
+ #
 
-  target_compile_features(${experiment_name} PUBLIC cxx_std_20)
+ target_compile_features(${experiment_name} PUBLIC cxx_std_20)
 
-  #
-  # Link the executeable to the used library
-  #
-  target_link_libraries(${experiment_name} PRIVATE ${CMAKE_PROJECT_NAME})
+ #
+ # Link the executeable to the used library
+ #
+ target_link_libraries(${experiment_name} PRIVATE ${CMAKE_PROJECT_NAME})
   
 endforeach()
 

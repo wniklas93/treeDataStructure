@@ -8,9 +8,9 @@ cmake_minimum_required(VERSION 3.16)
 #set(HEADER_LIST "${ModernCMakeExample_SOURCE_DIR}/include/coap.hpp")
 
 # Add sources in this folder
-set(NODES_SOURCES
-    ${CMAKE_CURRENT_LIST_DIR}/nodes.cpp
-)
+# set(NODES_SOURCES
+#    # ${CMAKE_CURRENT_LIST_DIR}/nodes.cpp
+# )
 
 add_library(libNodesCpp ${NODES_SOURCES})
 

@@ -1,5 +1,5 @@
 set(sources
-    src/nodes.cpp
+   # src/nodes.cpp
 )
 
 set(exe_sources
@@ -21,8 +21,8 @@ set(test_sources
 
 set(experiments_sources
   src/tree.cpp
-  src/memory_footprint.cpp
-  src/permissions.cpp
-  src/writeCallback.cpp
+  # src/memory_footprint.cpp
+  # src/permissions.cpp
+  # src/writeCallback.cpp
 )
 

@@ -46,11 +46,12 @@ endif()
 include(cmake/SourcesAndHeaders.cmake)
 
 message(STATUS "Build library:")
-add_library(
-    ${PROJECT_NAME}
-    STATIC
-    ${headers}
-    ${sources})
+
+add_library(${PROJECT_NAME} INTERFACE)
+target_include_directories(
+  ${PROJECT_NAME}
+  INTERFACE $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>)
+
 
 message("\t Found the following sources:")
 foreach(source IN LISTS sources)
@@ -81,14 +82,14 @@ message(STATUS "Added all header and source files.\n")
 # Add library to project
 #
 
-target_include_directories(
-    ${PROJECT_NAME}
-    PUBLIC
-    $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
-    PRIVATE
-    ${CMAKE_CURRENT_SOURCE_DIR}/sr
-    INTERFACE
-  )
+# target_include_directories(
+#     ${PROJECT_NAME}
+#     PUBLIC
+#     $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
+#     PRIVATE
+#     ${CMAKE_CURRENT_SOURCE_DIR}/src
+#     INTERFACE
+#   )
 
 # message(STATUS "Finished setting up include directories.")
 # add_library(${PROJECT_NAME}::${PROJECT_NAME} ALIAS ${PROJECT_NAME})
@@ -105,11 +106,11 @@ message(STATUS "Added library ${PROJECT_NAME}")
 # endif()
 
 
-# #
-# # Experiment setup
-# #
+#
+# Experiment setup
+#
 
-# if(${PROJECT_NAME}_ENABLE_EXPERIMENTS)
-#   message(STATUS "Build experiments for the project. Experiments should always be found in the `experiments` folder\n")
-#   add_subdirectory(experiments)
-# endif()
+if(${PROJECT_NAME}_ENABLE_EXPERIMENTS)
+  message(STATUS "Build experiments for the project. Experiments should always be found in the `experiments` folder\n")
+  add_subdirectory(experiments)
+endif()

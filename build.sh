@@ -30,8 +30,10 @@ fi
 mkdir -p $build/$profile
 
 if [ "$profile" = "debug" ]; then
-    cmake -S . -B $build/$profile -DCMAKE_BUILD_TYPE=DEBUG
+    cmake -S . -B $build/$profile -DCMAKE_BUILD_TYPE=DEBUG 
 else 
     cmake -S . -B $build/$profile -DCMAKE_BUILD_TYPE=RELEASE
 fi
+
+cmake --build $build/$profile --verbose
 

@@ -34,27 +34,27 @@ using SimpleTree = Node<
                         0,
                         Leafnode<LeafnodeHeader<0,5,int>>,
                         Leafnode<LeafnodeHeader<1,5.5,double>>,
-                        Leafnode<LeafnodeHeader<2,-4.5,float>>,
-                        Leafnode<LeafnodeHeader<3,std::array<char,255>{"hello"},std::array<char,255>>>,
-                        Leafnode<LeafnodeHeader<4,5,std::chrono::seconds>>
+                        Leafnode<LeafnodeHeader<2,-4.5,float>>
+                        // Leafnode<LeafnodeHeader<3,std::array<char,255>{"hello"},std::array<char,255>>>,
+                        // Leafnode<LeafnodeHeader<4,5,std::chrono::seconds>>
                       >
                   >;
 
-using AsymetricTree = Node<
-                        NodeHeader<
-                            0,
-                            SimpleTree,
-                            Leafnode<LeafnodeHeader<1,2.5,double>>,
-                            Leafnode<LeafnodeHeader<2,nullptr,int(*)(int,int)>>,
-                            Leafnode<LeafnodeHeader<3,nullptr,std::function<int()>>>
-                          >
-                        >;
+// using AsymetricTree = Node<
+//                         NodeHeader<
+//                             0,
+//                             SimpleTree,
+//                             Leafnode<LeafnodeHeader<1,2.5,double>>,
+//                             Leafnode<LeafnodeHeader<2,nullptr,int(*)(int,int)>>,
+//                             Leafnode<LeafnodeHeader<3,nullptr,std::function<int()>>>
+//                           >
+//                         >;
 
 int main() {
 
     SimpleTree t_simple;
-    AsymetricTree t_asym;
+//    AsymetricTree t_asym;
 
-    //t_simple.traverse<DecodeOperation>(0);
-  
+//    t_simple.traverse<DecodeOperation>(0);
+    return 0;
 }
